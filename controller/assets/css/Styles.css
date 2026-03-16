@@ -1,0 +1,470 @@
+/* =========================================
+   1. VARIABLES GLOBALES Y BASE
+   ========================================= */
+:root {
+    --yb-red: #da291c; /* Rojo base corporativo */
+    --yb-red-dark: #8b1510; /* Rojo oscuro formal para encabezados */
+    --yb-blue: #1c355e; /* Azul oscuro para menú activo y botones */
+    --yb-black: #212529; /* Negro suave para textos */
+}
+
+body {
+    background-color: #f4f7f6 !important;
+    overflow: hidden; /* Evita doble scroll en la ventana principal */
+    display: flex; /* Asegura que el layout principal funcione con el sidebar */
+}
+
+/* =========================================
+   SCROLLBAR PERSONALIZADO
+   ========================================= */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f4f7f6; 
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(218, 41, 28, 0.4); 
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--yb-red); 
+}
+
+/* =========================================
+   2. UTILIDADES Y COLORES
+   ========================================= */
+.text-danger-yb { color: var(--yb-red) !important; }
+.text-black { color: var(--yb-black) !important; }
+.text-muted { color: #6c757d !important; }
+.text-warning-dark { color: #856404 !important; }
+
+.text-blue-yb { color: var(--yb-red) !important; } 
+.bg-blue-yb-light { background-color: rgba(218, 41, 28, 0.1) !important; } 
+
+.bg-danger-yb-light { background-color: rgba(218, 41, 28, 0.1) !important; }
+.bg-success-light { background-color: rgba(25, 135, 84, 0.1) !important; }
+.bg-warning-light { background-color: rgba(255, 193, 7, 0.15) !important; }
+
+.border-start-danger { border-left: 5px solid var(--yb-red) !important; }
+.border-start-success { border-left: 5px solid #198754 !important; }
+.border-start-warning { border-left: 5px solid #ffc107 !important; }
+.border-top-danger-yb { border-top: 5px solid var(--yb-red) !important; }
+
+/* Sombra más suave y moderna para las tarjetas y tablas */
+.shadow-sm {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04) !important;
+}
+
+/* =========================================
+   3. ESTRUCTURA PRINCIPAL (FLEXBOX LAYOUT)
+   ========================================= */
+
+/* SIDEBAR: Lógica del Menú Hamburguesa Hover/Pin */
+.sidebar-yb {
+    width: 80px; /* Ancho inicial colapsado */
+    min-width: 80px;
+    flex-shrink: 0; 
+    height: 100vh;
+    background-color: #ffffff !important;
+    border-right: 1px solid #e9ecef;
+    z-index: 1040;
+    overflow-x: hidden; /* Oculta texto al estar colapsado */
+    white-space: nowrap; /* Evita que los textos bajen de línea */
+    transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Animación suave */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Expansión del Sidebar (Hover o Anclado con JS) */
+.sidebar-yb:hover, 
+.sidebar-yb.pinned {
+    width: 260px;
+}
+
+/* Ocultar elementos de texto cuando está colapsado para que no se vean amontonados */
+.sidebar-yb:not(:hover):not(.pinned) .sidebar-profile-text,
+.sidebar-yb:not(:hover):not(.pinned) .nav-link-yb span,
+.sidebar-yb:not(:hover):not(.pinned) .btn-logout-yb span {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+/* Mostrar texto cuando se expande */
+.sidebar-yb:hover .sidebar-profile-text,
+.sidebar-yb:hover .nav-link-yb span,
+.sidebar-yb:hover .btn-logout-yb span,
+.sidebar-yb.pinned .sidebar-profile-text,
+.sidebar-yb.pinned .nav-link-yb span,
+.sidebar-yb.pinned .btn-logout-yb span {
+    opacity: 1;
+    transition: opacity 0.4s 0.1s; /* Ligero retraso para que aparezca suave */
+}
+
+/* CONTENIDO PRINCIPAL */
+.main-content {
+    flex-grow: 1; 
+    height: 100vh;
+    overflow-y: scroll !important; 
+    overflow-x: hidden !important; 
+    padding: 3rem 4rem !important; 
+    margin: 0 !important; 
+    width: auto !important; 
+    display: block !important;
+    animation: fadeInContent 0.6s ease-out; /* Animación de entrada */
+}
+
+/* Animación global de entrada de las vistas */
+@keyframes fadeInContent {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* REGLA DE ORO PARA EL TAMAÑO UNIFORME */
+.main-content > div:not(.modal),
+.main-content > section,
+.main-content > main,
+.main-content > form,
+.main-content > .header-seccion {
+    width: 100% !important;
+    max-width: 1500px !important; 
+    margin-left: auto !important; 
+    margin-right: auto !important; 
+}
+
+/* =========================================
+   4. DISEÑO DEL MENÚ LATERAL
+   ========================================= */
+/* Botón Hamburguesa Superior */
+.menu-toggle-btn {
+    padding: 20px 0;
+    text-align: center;
+    cursor: pointer;
+    color: var(--yb-black);
+    font-size: 1.5rem;
+    transition: color 0.3s;
+}
+.menu-toggle-btn:hover {
+    color: var(--yb-red);
+}
+
+.sidebar-profile {
+    text-align: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.sidebar-nav {
+    padding-top: 0.5rem;
+    flex-grow: 1;
+}
+
+.nav-link-yb {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 16px 24px;
+    color: #000000 !important;
+    font-weight: 600;
+    font-size: 1.05rem;
+    text-decoration: none;
+    border-left: 6px solid transparent; 
+    background-color: transparent;
+    transition: all 0.3s ease;
+}
+
+.nav-link-yb i {
+    font-size: 1.3rem;
+    min-width: 30px; /* Asegura que el ícono no se mueva */
+    text-align: center;
+    color: var(--yb-blue) !important; 
+}
+
+.nav-link-yb:hover:not(.active) {
+    background-color: #f8f9fa;
+    transform: translateX(5px); /* Pequeño empuje a la derecha */
+}
+
+.nav-link-yb.active {
+    background-color: var(--yb-blue) !important;
+    color: #ffffff !important;
+    border-left: 6px solid var(--yb-red) !important;
+}
+
+.nav-link-yb.active i {
+    color: #ffffff !important;
+}
+
+.sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-logout-yb {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centrado cuando está colapsado */
+    width: 100%;
+    padding: 10px;
+    color: var(--yb-red);
+    background-color: #ffffff;
+    border: 1px solid var(--yb-red);
+    border-radius: 6px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+/* Cuando está expandido, alinea a la izquierda */
+.sidebar-yb:hover .btn-logout-yb,
+.sidebar-yb.pinned .btn-logout-yb {
+    justify-content: flex-start;
+    padding-left: 20px;
+}
+
+.btn-logout-yb i {
+    font-size: 1.2rem;
+    min-width: 30px;
+    text-align: center;
+}
+
+.btn-logout-yb:hover {
+    background-color: var(--yb-red);
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(218, 41, 28, 0.3);
+}
+
+/* =========================================
+   5. ENCABEZADOS DE VISTA (Recuadro Rojo)
+   ========================================= */
+.header-seccion {
+    background-color: var(--yb-red-dark) !important;
+    padding: 2.5rem 3rem !important; 
+    border-radius: 10px;
+    border: none !important;
+    margin-bottom: 2.5rem !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap; 
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.header-seccion:hover {
+    box-shadow: 0 10px 20px rgba(139, 21, 16, 0.2) !important;
+}
+
+.header-seccion h1,
+.header-seccion h2,
+.header-seccion p,
+.header-seccion span,
+.header-seccion div,
+.header-seccion i {
+    color: #ffffff !important;
+}
+
+.header-seccion h1,
+.header-seccion h2 {
+    font-size: 2.5rem !important; 
+    font-weight: 800 !important;
+    margin-bottom: 0.5rem;
+}
+
+.header-seccion p {
+    font-size: 1.15rem !important; 
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+.header-seccion .btn {
+    background-color: #ffffff !important;
+    color: var(--yb-red-dark) !important;
+    border: none !important;
+    font-weight: 700;
+    padding: 0.6rem 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.header-seccion .btn i {
+    color: var(--yb-red-dark) !important; 
+}
+
+.header-seccion .btn:hover {
+    background-color: #f8f9fa !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
+}
+
+/* =========================================
+   6. VISTA: LOGIN 
+   ========================================= */
+.login-bg {
+    background: linear-gradient(135deg, #eaeff4 0%, #d6dee5 100%);
+}
+
+.login-card {
+    border-radius: 15px !important;
+    border-top: 8px solid var(--yb-red) !important;
+    animation: scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes scaleUp {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.user-icon-wrapper {
+    width: 90px;
+    height: 90px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -85px; 
+    border: 5px solid #eaeff4;
+    transition: transform 0.4s ease;
+}
+
+.login-card:hover .user-icon-wrapper {
+    transform: rotate(360deg); /* Animación juguetona al hacer hover en el login */
+}
+
+.user-icon-wrapper i {
+    font-size: 4rem;
+    line-height: 1;
+}
+
+.login-card .form-control {
+    padding: 12px 15px;
+    font-weight: 500;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.login-card .form-control:focus {
+    border-color: var(--yb-red);
+    box-shadow: 0 0 0 0.25rem rgba(218, 41, 28, 0.25);
+}
+
+.login-card .input-group-text {
+    padding-left: 15px;
+    padding-right: 15px;
+    font-size: 1.2rem;
+}
+
+/* =========================================
+   ANIMACIÓN GENERAL PARA TODOS LOS BOTONES
+   ========================================= */
+.btn {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.btn:active {
+    transform: scale(0.95) !important; /* Efecto de pulsación */
+}
+
+/* =========================================
+   11. TARJETAS DEL USUARIO Y TABLAS CRUD
+   ========================================= */
+.card, .card-dash {
+    border-radius: 12px;
+    min-height: 160px; 
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover, .card-dash:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08) !important;
+}
+
+.card-dash .card-body { padding: 2rem !important; }
+.icon-dash { width: 85px !important; height: 85px !important; }
+.icon-dash i { font-size: 3.5rem !important; }
+.card-dash h6 { font-size: 1.1rem !important; letter-spacing: 0.5px; }
+.card-dash h2 { font-size: 3.5rem !important; margin-top: 5px; }
+
+/* =========================================
+   12. TABLAS CRUD (VISTAS DE DATOS)
+   ========================================= */
+.table {
+    font-size: 1.15rem !important;
+}
+.table th {
+    padding: 1.5rem 1rem !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    color: var(--yb-black) !important;
+}
+.table td {
+    padding: 1.2rem 1rem !important;
+    vertical-align: middle !important;
+    transition: background-color 0.2s;
+}
+
+/* Efecto hover suave para filas de tablas */
+.table-hover tbody tr {
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.table-hover tbody tr:hover {
+    transform: scale(1.01);
+    background-color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    z-index: 10;
+    position: relative;
+}
+
+.table .btn-sm {
+    font-size: 1rem !important;
+    padding: 0.4rem 0.8rem !important;
+}
+
+/* =========================================================================
+   13. NOTIFICACIONES FLOTANTES (TOASTS)
+   ========================================================================= */
+#toast-container-yb { 
+    z-index: 9999 !important; 
+    position: fixed; 
+    bottom: 2rem; 
+    right: 2rem; 
+    pointer-events: none; 
+}
+
+#toast-container-yb .toast { 
+    pointer-events: auto; 
+    border-radius: 12px; 
+    border: none; 
+    margin-top: 10px; 
+    min-width: 320px; 
+    animation: slideInToast 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+}
+
+@keyframes slideInToast { 
+    0% { transform: translateX(100%) scale(0.9); opacity: 0; } 
+    100% { transform: translateX(0) scale(1); opacity: 1; } 
+}
+
+/* =========================================================================
+   15. BARRA DE BÚSQUEDA 
+   ========================================================================= */
+.header-seccion .input-group .form-control:focus {
+    box-shadow: none !important;
+    border-color: transparent !important;
+    outline: none !important;
+    background-color: #ffffff !important; 
+    transform: scale(1.02); /* Crece un poquito al escribir */
+    transition: all 0.3s ease;
+}
+
+.header-seccion .input-group:focus-within .input-group-text {
+    background-color: #ffffff !important;
+    transform: scale(1.02);
+    transition: all 0.3s ease;
+}
+
+.header-seccion .input-group-text,
+.header-seccion .form-control {
+    border: none !important;
+    transition: all 0.3s ease;
+}
