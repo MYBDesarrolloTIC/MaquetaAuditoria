@@ -34,7 +34,7 @@ CREATE TABLE usuarios (
 
 -- Usuario de prueba(password: admin123)
 INSERT INTO usuarios (nombre, login, password, id_rol, estado) 
-VALUES ('Administrador', 'admin', '$2y$10$7rls9m.7v8n2H6W8U/5bu.H8tF6p6f1.3g7p6k5l4m3n2o1p2q3r', 1, 1);
+VALUES ('Administrador', 'admin', '$2y$10$g8irZnlC2vceeOfY.1ArFuSs1YKwCfaTxakr84uy7iJdfqQ3bLSne', 1, 1);
 
 -- Crear auditoría
 CREATE TABLE auditoria (

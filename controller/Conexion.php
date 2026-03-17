@@ -4,7 +4,7 @@ class Conexion {
 
     private $host = "localhost";
 
-    private $db   = "bdmaquetaauditoria";
+    private $db   = "bdmaquetaaudiencia";
 
     private $user = "root";
 
