@@ -9,8 +9,8 @@
     </div>
 
     <div class="sidebar-nav">
-        <a href="VistaListaAuditoria.php" class="nav-link-yb active">
-            <i class="fas fa-home"></i> <span>Inicio</span>
+        <a href="VistaHistorialAuditoria.php" class="nav-link-yb active">
+            <i class="fas fa-home"></i> <span>Historial</span>
         </a>
         <a href="VistaGestionAuditoria.php" class="nav-link-yb">
             <i class="fas fa-clipboard-list"></i> <span>Gestión</span>

@@ -4,6 +4,62 @@
 const API_REQUEST_FAIL = 0;
 const API_REQUEST_SUCCESS = 1;
 
+/* =========================================================================
+   FUNCIÓN CAZADORA DE ERRORES (Reutilizable para todos los módulos)
+   ========================================================================= */
+const procesarPeticion = async (url, opciones = {}) => {
+    try {
+        // En cada petición futura que se haga, buscamos el token guardado
+        const token = localStorage.getItem('jwt_token');
+        
+        if (!opciones.headers) {
+            opciones.headers = {};
+        }
+
+        // Si existe el token, se lo enviamos al backend PHP como autorización
+        if (token) {
+            opciones.headers['Authorization'] = 'Bearer ' + token;
+        }
+
+        const req = await fetch(url, opciones);
+        const textoCrudo = await req.text(); // Atrapamos la respuesta cruda de PHP
+        
+        try {
+            return JSON.parse(textoCrudo); 
+        } catch (errorParseo) {
+            console.error("❌ ERROR EN PHP DETECTADO ❌\n", textoCrudo);
+            return { status: 0, message: "Error interno del servidor. Revisa la consola (F12)." };
+        }
+    } catch (errorRed) {
+        console.error("Error real de conexión:", errorRed);
+        return { status: 0, message: "No se pudo conectar con el servidor." };
+    }
+};
+
+/* =========================================================================
+   API: USUARIOS
+   ========================================================================= */
+const apiUsuarios = {
+    baseUrl: '../controller/usuario_controller.php',
+
+    getUsuarios: async () => await procesarPeticion(`${apiUsuarios.baseUrl}?action=getUsuarios`, { method: 'GET' }),
+    
+    createUsuario: async (datos) => await procesarPeticion(apiUsuarios.baseUrl, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'createUsuario', ...datos })
+    }),
+    
+    updateUsuario: async (datos) => await procesarPeticion(apiUsuarios.baseUrl, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updateUsuario', ...datos })
+    }),
+    
+    deleteUsuario: async (id) => await procesarPeticion(apiUsuarios.baseUrl, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'deleteUsuario', id: id })
+    })
+};
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////// SECCION DE PABLO /////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
