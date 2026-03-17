@@ -6,8 +6,7 @@
     <title>Login - I. Municipalidad de Yerbas Buenas</title>    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    
-    <link rel="stylesheet" href="../../assets/css/style.css?v=6">
+    <link rel="stylesheet" href="../assets/css/Styles.css">
 </head>
 <body class="login-bg d-flex align-items-center justify-content-center vh-100">
 
@@ -43,7 +42,7 @@
                                 <span class="input-group-text bg-light border-end-0 text-muted">
                                     <i class="bi bi-lock-fill"></i>
                                 </span>
-                                <input type="password" id="password" name="password" class="form-control bg-light border-start-0 ps-0" placeholder="••••••••" required>
+                                <input type="password" id="password" name="password" class="form-control bg-light border-start-0 ps-0" required>
                             </div>
                         </div>
 
@@ -52,10 +51,7 @@
                         </button>
 
                     </form>
-                    
-                </div> </div> </div> </div> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../../model/script.js?v=6"></script>
-    <script src="../../assets/js/login.js?v=6"></script>
-    
+<script src="../model/api.js"></script>
+<script src="../assets/js/Login.js"></script>
 </body>
 </html>
