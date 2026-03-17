@@ -124,7 +124,7 @@ const apiUsuarios = {
 //mediente tokens y no variable de session
 const validUserTokens = async (username, password) => {
     if (username.trim().length > 0 && password.length > 0) {
-        const request = await fetch("../../controller/login_controller.php", {
+        const request = await fetch("../controller/login_controller.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: username, password: password })

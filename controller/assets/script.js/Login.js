@@ -13,13 +13,13 @@ async function procesarLogin(e) {
     }
 
     try {
-        const vuser = await validUser(userVal, passVal);
+        const vuser = await validUserTokens(userVal, passVal);
         if (vuser.status === 1 && vuser.data && vuser.data.status === 1) {
             const rolUsuario = String(vuser.data.rol || '').toLowerCase().trim();
-            if (['superadmin', 'admin', 'administrador'].includes(rolUsuario)) {
-                window.location.href = "VistaInicio.php?login=success";
+            if (['admin','secretaria'].includes(rolUsuario)) {
+                window.location.href = "VistaGestionAuditoria.php?login=success";
             } else {
-                window.location.href = "VistaEscaner.php?login=success";
+                window.location.href = "VistaListaAuditoria.php?login=success";
             }
         } else {
             const mensajeFallo = vuser.data ? vuser.data.message : (vuser.message || "Credenciales incorrectas.");

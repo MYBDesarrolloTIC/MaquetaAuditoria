@@ -2,6 +2,8 @@
 require_once 'Conexion.php';
 require_once 'JwtHandler.php';
 
+header('Content-Type: application/json');
+
 $json = file_get_contents('php://input');
 $datos = json_decode($json, true);
 
@@ -12,31 +14,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($datos['username'])) {
     $usuario = $datos['username'];
     $password = $datos['password'];
 
-    $stmt = $con->prepare("SELECT id, login, password, rol, estado FROM usuarios WHERE login = ?");
+    // MODIFICADO: Hacemos un JOIN con la tabla roles para traer el nombre del rol
+    $sql = "SELECT u.id, u.login, u.password, u.estado, r.nombre as rol 
+            FROM usuarios u 
+            INNER JOIN roles r ON u.id_rol = r.id 
+            WHERE u.login = ?";
+            
+    $stmt = $con->prepare($sql);
     $stmt->execute([$usuario]);
     $user = $stmt->fetch();
 
     if ($user && password_verify($password, $user['password'])) {
         if ($user['estado'] == 1) {
             
-            // Instanciar nuestro manejador JWT
             $jwt = new JwtHandler();
-            
-            // Los datos que irán dentro del token (No enviar passwords ni info sensible aquí)
-            $tokenData = [
-                'id' => $user['id'],
-                'rol' => $user['rol']
-            ];
+            // Generamos el token guardando el ID del usuario y el texto de su rol
+            $token = $jwt->generarToken(['id' => $user['id'], 'rol' => $user['rol']]);
 
-            // Generar el Token
-            $token = $jwt->generarToken($tokenData);
-
-            // Responder SOLO con el token y un mensaje de éxito
+            // Devolvemos la estructura EXACTA que Login.js de tu compañero espera
             echo json_encode([
                 "status" => 1,
                 "message" => "Acceso concedido",
-                "token" => $token,
-                "rol" => $user['rol'] // Se envía el rol solo para saber a qué vista redirigir en JS
+                "token" => $token, 
+                "data" => [
+                    "status" => 1, 
+                    "rol" => $user['rol'] // Se envía el texto ('admin', 'secretaria', etc.) gracias al JOIN
+                ]
             ]);
         } else {
             echo json_encode(["status" => 0, "message" => "Usuario inactivo"]);

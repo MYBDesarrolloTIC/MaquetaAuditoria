@@ -8,7 +8,7 @@ class Conexion {
 
     private $user = "root";
 
-    private $pass = "";
+    private $pass = "root";
 
     private $charset = "utf8mb4";
 
