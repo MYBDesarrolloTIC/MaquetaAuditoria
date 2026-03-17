@@ -10,6 +10,8 @@ CREATE TABLE estado_auditoria (
     nombre VARCHAR(50) NOT NULL
 );
 
+INSERT INTO estado_auditoria (nombre) VALUES ('Pendiente'), ('Completada'), ('No Completada');
+
 CREATE TABLE roles(
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(20) NOT NULL UNIQUE

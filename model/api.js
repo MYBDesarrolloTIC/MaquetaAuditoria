@@ -175,3 +175,53 @@ const ProcesarPeticion = async (url, opciones) => {
         return { status: 0, message: "No se pudo conectar con el servidor." };
     }
 };
+
+/* =========================================================================
+   API: GESTIÓN DE AUDITORÍAS (ALCALDE Y SECRETARIA)
+   ========================================================================= */
+const apiAuditoria = {
+    baseUrl: '../../controller/auditoria_controller.php',
+
+    // Leer pendientes para el Alcalde
+    getPendientes: async () => await procesarPeticion(`${apiAuditoria.baseUrl}?action=getPendientes`, { method: 'GET' }),
+    
+    // Leer todo para la Secretaria
+    getGestionDiaria: async () => await procesarPeticion(`${apiAuditoria.baseUrl}?action=getGestionDiaria`, { method: 'GET' }),
+    
+    // Cambiar estado (Botones del Alcalde)
+    cambiarEstado: async (id, nuevo_estado) => await procesarPeticion(apiAuditoria.baseUrl, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cambiarEstado', id: id, nuevo_estado: nuevo_estado })
+    }),
+    
+    // Crear nueva (Secretaria)
+    createAuditoria: async (datos) => await procesarPeticion(apiAuditoria.baseUrl, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'createAuditoria', ...datos })
+    }),
+    
+    // Editar (Secretaria)
+    updateAuditoria: async (datos) => await procesarPeticion(apiAuditoria.baseUrl, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updateAuditoria', ...datos })
+    }),
+    
+    // Eliminar (Secretaria)
+    deleteAuditoria: async (id) => await procesarPeticion(apiAuditoria.baseUrl, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'deleteAuditoria', id: id })
+    })
+};
+
+/* =========================================================================
+   API: HISTORIAL GENERAL
+   ========================================================================= */
+const apiHistorial = {
+    baseUrl: '../../controller/historial_controller.php',
+
+    getHistorialGeneral: async () => await procesarPeticion(`${apiHistorial.baseUrl}?action=getHistorialGeneral`, { method: 'GET' })
+};

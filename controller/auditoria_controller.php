@@ -1,0 +1,194 @@
+<?php
+require_once 'Conexion.php';
+require_once 'JwtHandler.php';
+
+header('Content-Type: application/json');
+
+// ========================================================================
+// 1. MIDDLEWARE: VALIDACIÓN DE SEGURIDAD
+// ========================================================================
+$headers = apache_request_headers();
+$authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : '');
+
+if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+    echo json_encode(['status' => 0, 'message' => 'Acceso denegado. Token no proporcionado.']);
+    exit;
+}
+
+$token = $matches[1];
+$jwt = new JwtHandler();
+$tokenData = $jwt->validarToken($token);
+
+// AHORA PERMITIMOS 3 ROLES: admin, alcalde y secretaria
+if (!$tokenData || !in_array($tokenData['rol'], ['admin', 'alcalde', 'secretaria'])) {
+    echo json_encode(['status' => 0, 'message' => 'Acceso denegado. Permisos insuficientes.']);
+    exit;
+}
+
+// ========================================================================
+// 2. PROCESAMIENTO DE AUDITORÍAS
+// ========================================================================
+$db = new Conexion();
+$con = $db->conectar();
+
+$action = isset($_GET['action']) ? $_GET['action'] : '';
+$json = file_get_contents('php://input');
+$datos = json_decode($json, true);
+
+if (isset($datos['action'])) {
+    $action = $datos['action'];
+}
+
+switch ($action) {
+
+    // --- LEER AUDITORÍAS PENDIENTES (ALCALDE) ---
+    case 'getPendientes':
+        try {
+            $sql = "SELECT a.id, a.fecha, a.hora, a.nombre_solicitante, a.rut_solicitante, a.motivo, e.nombre as estado 
+                    FROM auditoria a
+                    INNER JOIN estado_auditoria e ON a.id_estado = e.id
+                    WHERE e.nombre = 'Pendiente'
+                    ORDER BY a.fecha ASC, a.hora ASC"; 
+            
+            $stmt = $con->prepare($sql);
+            $stmt->execute();
+            $auditorias = $stmt->fetchAll();
+            
+            echo json_encode(['status' => 1, 'data' => $auditorias]);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 0, 'message' => 'Error al obtener los datos.']);
+        }
+        break;
+
+    // --- CAMBIAR ESTADO DE AUDITORÍA (ALCALDE) ---
+    case 'cambiarEstado':
+        if (!isset($datos['id']) || !isset($datos['nuevo_estado'])) {
+            echo json_encode(['status' => 0, 'message' => 'Faltan datos para actualizar.']);
+            exit;
+        }
+
+        try {
+            $stmtEstado = $con->prepare("SELECT id FROM estado_auditoria WHERE nombre = ?");
+            $stmtEstado->execute([$datos['nuevo_estado']]);
+            $id_estado = $stmtEstado->fetchColumn();
+
+            if (!$id_estado) {
+                echo json_encode(['status' => 0, 'message' => 'Estado no válido.']);
+                exit;
+            }
+
+            $sql = "UPDATE auditoria SET id_estado = ? WHERE id = ?";
+            $stmt = $con->prepare($sql);
+            $stmt->execute([$id_estado, $datos['id']]);
+
+            echo json_encode(['status' => 1, 'message' => 'Estado actualizado correctamente.']);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 0, 'message' => 'Error al actualizar el estado.']);
+        }
+        break;
+
+    // ====================================================================
+    // NUEVOS MÉTODOS PARA LA SECRETARIA Y EL ADMIN
+    // ====================================================================
+
+    // --- LEER AUDITORÍAS DIARIAS (Pendientes e Historial) ---
+    case 'getGestionDiaria':
+        try {
+            // Extraemos todo, y que el frontend de tu amigo decida en qué tabla ponerlo
+            $sql = "SELECT a.id, a.fecha, a.hora, a.nombre_solicitante, a.rut_solicitante, a.motivo, e.nombre as estado 
+                    FROM auditoria a
+                    INNER JOIN estado_auditoria e ON a.id_estado = e.id
+                    ORDER BY a.fecha DESC, a.hora DESC";
+            
+            $stmt = $con->prepare($sql);
+            $stmt->execute();
+            $todas = $stmt->fetchAll();
+
+            echo json_encode(['status' => 1, 'data' => $todas]);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 0, 'message' => 'Error al obtener la gestión diaria.']);
+        }
+        break;
+
+    // --- CREAR NUEVA SOLICITUD ---
+    case 'createAuditoria':
+        // Solo Secretaria y Admin pueden crear (Bloqueamos al Alcalde por si acaso)
+        if (!in_array($tokenData['rol'], ['admin', 'secretaria'])) {
+            echo json_encode(['status' => 0, 'message' => 'Solo secretaría o admin pueden crear solicitudes.']);
+            exit;
+        }
+
+        try {
+            // Buscamos el ID del estado "Pendiente" (Por defecto toda solicitud nueva entra pendiente)
+            $stmtEstado = $con->prepare("SELECT id FROM estado_auditoria WHERE nombre = 'Pendiente'");
+            $stmtEstado->execute();
+            $id_estado = $stmtEstado->fetchColumn();
+
+            // Guardamos usando el ID del usuario que está conectado (que viene en el token)
+            $sql = "INSERT INTO auditoria (fecha, hora, nombre_solicitante, rut_solicitante, motivo, id_estado, id_usuario) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $con->prepare($sql);
+            $stmt->execute([
+                $datos['fecha'], 
+                $datos['hora'], 
+                $datos['nombre_solicitante'], 
+                str_replace(['.', '-'], '', $datos['rut_solicitante']), // Limpiamos el RUT por si viene con puntos y guion
+                $datos['motivo'], 
+                $id_estado, 
+                $tokenData['id']
+            ]);
+
+            echo json_encode(['status' => 1, 'message' => 'Solicitud creada con éxito.']);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 0, 'message' => 'Error al guardar en la base de datos.']);
+        }
+        break;
+
+    // --- EDITAR SOLICITUD ---
+    case 'updateAuditoria':
+        if (!in_array($tokenData['rol'], ['admin', 'secretaria'])) {
+            echo json_encode(['status' => 0, 'message' => 'No tienes permisos para editar.']);
+            exit;
+        }
+
+        try {
+            $sql = "UPDATE auditoria SET fecha = ?, hora = ?, nombre_solicitante = ?, rut_solicitante = ?, motivo = ? WHERE id = ?";
+            $stmt = $con->prepare($sql);
+            $stmt->execute([
+                $datos['fecha'], 
+                $datos['hora'], 
+                $datos['nombre_solicitante'], 
+                str_replace(['.', '-'], '', $datos['rut_solicitante']), 
+                $datos['motivo'], 
+                $datos['id']
+            ]);
+
+            echo json_encode(['status' => 1, 'message' => 'Solicitud actualizada correctamente.']);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 0, 'message' => 'Error al actualizar.']);
+        }
+        break;
+
+    // --- ELIMINAR SOLICITUD ---
+    case 'deleteAuditoria':
+        if (!in_array($tokenData['rol'], ['admin', 'secretaria'])) {
+            echo json_encode(['status' => 0, 'message' => 'No tienes permisos para eliminar.']);
+            exit;
+        }
+
+        try {
+            $sql = "DELETE FROM auditoria WHERE id = ?";
+            $stmt = $con->prepare($sql);
+            $stmt->execute([$datos['id']]);
+
+            echo json_encode(['status' => 1, 'message' => 'Solicitud eliminada.']);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 0, 'message' => 'Error al eliminar.']);
+        }
+        break;
+
+    default:
+        echo json_encode(['status' => 0, 'message' => 'Acción no reconocida.']);
+        break;
+}
+?>
