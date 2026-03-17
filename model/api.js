@@ -121,3 +121,57 @@ const apiUsuarios = {
 ////////////////////////////////////////////// SECCION DE PABLO /////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+//mediente tokens y no variable de session
+const validUserTokens = async (username, password) => {
+    if (username.trim().length > 0 && password.length > 0) {
+        const request = await fetch("../../controller/login_controller.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: username, password: password })
+        });
+
+        if (!request.ok) return { status: 0, message: "Error en la solicitud" };
+        
+        const response = await request.json();
+
+        // MAGIA AQUÍ: Si el login fue exitoso y el backend nos dio un token,
+        // lo guardamos silenciosamente en el LocalStorage del navegador.
+        if (response.status === 1 && response.token) {
+            localStorage.setItem('jwt_token', response.token);
+        }
+
+        // Retornamos la respuesta tal cual para que el Login.js de tu amigo funcione
+        return response;
+    } else {
+        return { status: 0, message: "Usuario o contraseña vacíos" };
+    }
+};
+// para cazar errores y util para mas modulos
+const ProcesarPeticion = async (url, opciones) => {
+    try {
+        // En cada petición futura que se haga, buscamos el token
+        const token = localStorage.getItem('jwt_token');
+        
+        if (!opciones.headers) {
+            opciones.headers = {};
+        }
+
+        // Si existe el token, se lo enviamos al backend PHP en las cabeceras
+        if (token) {
+            opciones.headers['Authorization'] = 'Bearer ' + token;
+        }
+
+        const req = await fetch(url, opciones);
+        const textoCrudo = await req.text(); 
+        
+        try {
+            return JSON.parse(textoCrudo); 
+        } catch (errorParseo) {
+            console.error("❌ ERROR EN PHP DETECTADO ❌\n", textoCrudo);
+            return { status: 0, message: "Error interno del servidor. Revisa la consola (F12)." };
+        }
+    } catch (errorRed) {
+        console.error("Error real de conexión:", errorRed);
+        return { status: 0, message: "No se pudo conectar con el servidor." };
+    }
+};
