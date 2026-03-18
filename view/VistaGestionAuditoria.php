@@ -17,7 +17,7 @@
 
    <div class="mb-4 bg-white p-3 shadow-sm" style="border-radius: 12px;">
         <input type="text" id="buscador-solicitudes" class="form-control" placeholder="🔍 Buscar por RUT o Nombre...">
-    </div>
+    </div>  
 
     <h4 class="mb-3 text-black"><i class="fas fa-clock text-warning"></i> Pendientes</h4>
     <div class="card shadow-sm border-0 mb-5">
@@ -182,7 +182,7 @@
             </div>
         </div>
     </div>
-
-    <script src="../controller/assets/script.js/GestionAudiencia.js"></script>
+<script src="../model/api.js"></script>
+<script src="../assets/js/GestionAudiencia.js"></script>
 
 <?php include 'includes/Footer.php'; ?>
