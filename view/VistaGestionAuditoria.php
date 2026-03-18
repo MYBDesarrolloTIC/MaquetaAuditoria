@@ -25,7 +25,6 @@
             <table class="table table-hover mb-0" id="tabla-pendientes">
                 <thead class="bg-light">
                     <tr>
-                        <th class="ps-4"><input type="checkbox" id="checkAll"></th>
                         <th>RUT</th>
                         <th>Nombre Completo</th>
                         <th>Fecha</th>

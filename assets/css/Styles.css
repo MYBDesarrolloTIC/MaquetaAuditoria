@@ -123,9 +123,7 @@ body, html {
     max-width: 1500px !important; 
     margin-left: auto !important; 
     margin-right: auto !important; 
-}
-
-/* =========================================
+}/* =========================================
    4. DISEÑO DEL MENÚ LATERAL INTERNO
    ========================================= */
 /* Ocultar textos cuando está colapsado */
@@ -192,18 +190,28 @@ body, html {
     color: var(--yb-blue) !important; 
 }
 
+/* EFECTO HOVER: Sombra y texto/ícono rojo */
 .nav-link-yb:hover:not(.active) {
-    background-color: #f8f9fa;
+    background-color: #ffffff;
     transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: var(--yb-red) !important;
 }
 
+.nav-link-yb:hover:not(.active) i {
+    color: var(--yb-red) !important;
+}
+
+/* EFECTO ACTIVO: Marcado en rojo */
 .nav-link-yb.active {
-    background-color: var(--yb-blue) !important;
-    color: #ffffff !important;
+    background-color: rgba(218, 41, 28, 0.08) !important;
+    color: var(--yb-red) !important;
     border-left: 6px solid var(--yb-red) !important;
 }
 
-.nav-link-yb.active i { color: #ffffff !important; }
+.nav-link-yb.active i { 
+    color: var(--yb-red) !important; 
+}
 
 .sidebar-footer {
     padding: 1.5rem;

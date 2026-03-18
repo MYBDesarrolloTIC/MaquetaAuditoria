@@ -123,7 +123,7 @@ const ProcesarPeticion = async (url, opciones) => {
    API: GESTIÓN DE AUDITORÍAS (ALCALDE Y SECRETARIA)
    ========================================================================= */
 const apiAuditoria = {
-    baseUrl: '../../controller/auditoria_controller.php',
+    baseUrl: '../controller/auditoria_controller.php',
 
     // Leer pendientes para el Alcalde
     getPendientes: async () => await procesarPeticion(`${apiAuditoria.baseUrl}?action=getPendientes`, { method: 'GET' }),
@@ -164,7 +164,7 @@ const apiAuditoria = {
    API: HISTORIAL GENERAL
    ========================================================================= */
 const apiHistorial = {
-    baseUrl: '../../controller/historial_controller.php',
+    baseUrl: '../controller/historial_controller.php',
 
     getHistorialGeneral: async () => await procesarPeticion(`${apiHistorial.baseUrl}?action=getHistorialGeneral`, { method: 'GET' })
 };
