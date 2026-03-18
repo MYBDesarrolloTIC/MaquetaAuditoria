@@ -9,11 +9,11 @@
     </div>
 
     <div class="sidebar-nav">
-        <a href="VistaHistorialAuditoria.php" class="nav-link-yb active">
-            <i class="fas fa-home"></i> <span>Historial</span>
-        </a>
         <a href="VistaGestionAuditoria.php" class="nav-link-yb">
             <i class="fas fa-clipboard-list"></i> <span>Gestión</span>
+        </a>
+        <a href="VistaHistorialAuditoria.php" class="nav-link-yb active">
+            <i class="fas fa-clipboard"></i> <span>Historial</span>
         </a>
     </div>
 

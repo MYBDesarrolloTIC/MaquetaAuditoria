@@ -1,17 +1,12 @@
-<?php 
-// 1. Cargamos el Header (Esto trae el CSS, FontAwesome, abre el app-wrapper y carga el MENÚ)
-include 'includes/Header.php'; 
-?>
+<?php include 'includes/Header.php'; ?>
 
-<main class="main-content">
-    
     <div class="header-seccion">
         <div>
             <h1>Gestión de Solicitudes Diarias</h1>
             <p>Administración de audiencias y trámites diarios</p>
         </div>
         <div>
-            <button class="btn btn-danger me-2" id="btn-eliminar-seleccionados">
+            <button class="btn btn-danger me-2" onclick="alert('Función de eliminación múltiple en desarrollo')">
                 <i class="fas fa-trash"></i> Eliminar Seleccionados
             </button>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrear">
@@ -20,7 +15,7 @@ include 'includes/Header.php';
         </div>
     </div>
 
-    <div class="mb-4 card p-3 shadow-sm border-0">
+   <div class="mb-4 bg-white p-3 shadow-sm" style="border-radius: 12px;">
         <input type="text" id="buscador-solicitudes" class="form-control" placeholder="🔍 Buscar por RUT o Nombre...">
     </div>
 
@@ -40,31 +35,7 @@ include 'includes/Header.php';
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td class="ps-4"><input type="checkbox"></td>
-                        <td>19.876.543-2</td>
-                        <td>María Silva Rojas</td>
-                        <td>2026-03-16</td>
-                        <td>11:15</td>
-                        <td>Consulta subsidio habitacional</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i> Editar</button>
-                            <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="ps-4"><input type="checkbox"></td>
-                        <td>20.123.456-7</td>
-                        <td>Carlos Soto Tapia</td>
-                        <td>2026-03-16</td>
-                        <td>12:00</td>
-                        <td>Renovación patente comercial</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i> Editar</button>
-                            <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                </tbody>
+                    </tbody>
             </table>
         </div>
     </div>
@@ -84,32 +55,134 @@ include 'includes/Header.php';
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="bg-success-light">
-                        <td class="ps-4">12.345.678-9</td>
-                        <td>Juan Pérez Gómez</td>
-                        <td>2026-03-16</td>
-                        <td>10:30</td>
-                        <td>Reparación junta de vecinos</td>
-                        <td><span class="badge bg-success">✅ Completada</span></td>
-                    </tr>
-                    <tr class="bg-danger-yb-light">
-                        <td class="ps-4">15.678.901-2</td>
-                        <td>Ana Rojas Muñoz</td>
-                        <td>2026-03-16</td>
-                        <td>09:00</td>
-                        <td>Solicitud beca escolar</td>
-                        <td><span class="badge bg-danger">❌ No Completada (No asistió)</span></td>
-                    </tr>
-                </tbody>
+                    </tbody>
             </table>
         </div>
     </div>
 
-</main>
+    <div class="modal fade" id="modalCrear" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
+                <div class="modal-header border-0 py-4 px-5" style="background: linear-gradient(135deg, var(--yb-blue) 0%, #2a5298 100%);">
+                    <h4 class="modal-title fw-bold text-white mb-0"><i class="fas fa-file-signature me-2 text-warning"></i> Registrar Nueva Solicitud</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-5 bg-light">
+                    <form id="form-crear-solicitud">
+                        <div class="row g-4">
+                            <div class="col-md-5">
+                                <div class="bg-white p-4 rounded-4 shadow-sm h-100 border-top border-3 border-primary">
+                                    <h6 class="text-primary fw-bold mb-4"><i class="fas fa-user-circle me-2"></i>Datos del Solicitante</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small fw-bold">RUT DEL CIUDADANO</label>
+                                        <input type="text" class="form-control form-control-lg bg-light" id="crear-rut" placeholder="Ej: 12.345.678-9" required>
+                                    </div>
+                                    <div>
+                                        <label class="form-label text-muted small fw-bold">NOMBRE COMPLETO</label>
+                                        <input type="text" class="form-control form-control-lg bg-light" id="crear-nombre" placeholder="Nombre completo" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="bg-white p-4 rounded-4 shadow-sm h-100 border-top border-3 border-warning">
+                                    <h6 class="text-warning-dark fw-bold mb-4"><i class="fas fa-calendar-alt me-2"></i>Detalles de la Cita</h6>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-sm-6">
+                                            <label class="form-label text-muted small fw-bold">FECHA</label>
+                                            <input type="date" class="form-control form-control-lg bg-light" id="crear-fecha" required>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <label class="form-label text-muted small fw-bold">HORA</label>
+                                            <input type="time" class="form-control form-control-lg bg-light" id="crear-hora" required>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label text-muted small fw-bold">MOTIVO / OBSERVACIONES</label>
+                                        <textarea class="form-control bg-light" id="crear-motivo" rows="4" placeholder="Describa el motivo..." required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 px-5 py-4 bg-white">
+                    <button type="button" class="btn btn-light btn-lg px-4 text-muted fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-lg px-5 fw-bold shadow-sm" onclick="guardarNuevaSolicitud()"><i class="fas fa-save me-2"></i> Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<script src="../controller/assets/script.js/GestionAudiencia.js"></script>
+    <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
+                <div class="modal-header border-0 py-4 px-5 bg-warning">
+                    <h4 class="modal-title fw-bold text-dark mb-0"><i class="fas fa-edit me-2"></i> Editar Solicitud</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-5 bg-light">
+                    <form id="form-editar-solicitud">
+                        <input type="hidden" id="editar-id">
+                        <div class="row g-4">
+                            <div class="col-md-5">
+                                <div class="bg-white p-4 rounded-4 shadow-sm h-100 border-top border-3 border-warning">
+                                    <h6 class="text-warning-dark fw-bold mb-4"><i class="fas fa-user-circle me-2"></i>Datos a Corregir</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small fw-bold">RUT DEL CIUDADANO</label>
+                                        <input type="text" class="form-control form-control-lg bg-light" id="editar-rut" required>
+                                    </div>
+                                    <div>
+                                        <label class="form-label text-muted small fw-bold">NOMBRE COMPLETO</label>
+                                        <input type="text" class="form-control form-control-lg bg-light" id="editar-nombre" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="bg-white p-4 rounded-4 shadow-sm h-100 border-top border-3 border-secondary">
+                                    <h6 class="text-secondary fw-bold mb-4"><i class="fas fa-calendar-alt me-2"></i>Detalles de la Cita</h6>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-sm-6">
+                                            <label class="form-label text-muted small fw-bold">FECHA</label>
+                                            <input type="date" class="form-control form-control-lg bg-light" id="editar-fecha" required>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <label class="form-label text-muted small fw-bold">HORA</label>
+                                            <input type="time" class="form-control form-control-lg bg-light" id="editar-hora" required>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label text-muted small fw-bold">MOTIVO / OBSERVACIONES</label>
+                                        <textarea class="form-control bg-light" id="editar-motivo" rows="4" required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 px-5 py-4 bg-white">
+                    <button type="button" class="btn btn-light btn-lg px-4 text-muted fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning btn-lg px-5 fw-bold text-dark shadow-sm" onclick="guardarEdicion()"><i class="fas fa-save me-2"></i> Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<?php 
-// 3. Cargamos el Footer (Esto cierra el app-wrapper y carga los scripts globales)
-include 'includes/Footer.php'; 
-?>
+    <div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
+                <div class="modal-body p-5 text-center">
+                    <div class="text-danger mb-4"><i class="fas fa-exclamation-triangle" style="font-size: 5rem;"></i></div>
+                    <h3 class="fw-bold mb-3">¿Eliminar Solicitud?</h3>
+                    <p class="text-muted mb-4 fs-5">Esta acción no se puede deshacer. ¿Estás seguro de que deseas borrar este registro del sistema?</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <button type="button" class="btn btn-light btn-lg fw-bold px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger btn-lg fw-bold px-5 shadow-sm" onclick="ejecutarEliminar()"><i class="fas fa-trash me-2"></i> Sí, Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../controller/assets/script.js/GestionAudiencia.js"></script>
+
+<?php include 'includes/Footer.php'; ?>

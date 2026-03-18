@@ -37,7 +37,7 @@ const procesarPeticion = async (url, opciones = {}) => {
 };
 
 /* =========================================================================
-   API: USUARIOS
+   1. API: VISTA DE USUARIOS
    ========================================================================= */
 const apiUsuarios = {
     baseUrl: '../controller/usuario_controller.php',

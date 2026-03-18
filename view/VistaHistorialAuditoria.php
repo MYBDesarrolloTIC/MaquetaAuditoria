@@ -1,5 +1,5 @@
 <?php 
-// 1. Cargamos el Header (Trae todo el diseño, el Menú y abre la etiqueta <main>)
+// 1. Cargamos el Header
 include 'includes/Header.php'; 
 ?>
 
@@ -9,7 +9,7 @@ include 'includes/Header.php';
             <p>Registro histórico de todas las solicitudes y audiencias</p>
         </div>
         <div>
-            </div>
+        </div>
     </div>
 
     <div class="card shadow-sm border-0 mb-5">
@@ -19,31 +19,31 @@ include 'includes/Header.php';
                     <tr>
                         <th class="ps-4">RUT</th>
                         <th>Nombre Completo</th>
-                        <th>Fecha</th>
+                        <th>Fecha y Hora</th>
                         <th>Estado</th>
                         <th class="text-center">Detalles</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="ps-4">12.345.678-9</td>
-                        <td>Juan Pérez Gómez</td>
-                        <td>2026-03-16</td>
-                        <td><span class="badge bg-success">Completada</span></td>
+                        <td class="ps-4">11.222.333-4</td>
+                        <td class="fw-bold text-black">Roberto Castillo</td>
+                        <td>2026-03-10 a las 10:30</td>
+                        <td><span class="badge bg-success shadow-sm px-3 py-2">Completada</span></td>
                         <td class="text-center">
-                            <button class="btn btn-info btn-sm text-white" data-bs-toggle="modal" data-bs-target="#modalDetalle">
-                                <i class="fas fa-eye"></i> Ver Datos
+                            <button class="btn btn-info btn-sm text-white fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalDetalle">
+                                <i class="fas fa-eye me-1"></i> Ver Datos
                             </button>
                         </td>
                     </tr>
                     <tr>
-                        <td class="ps-4">15.678.901-2</td>
-                        <td>Ana Rojas Muñoz</td>
-                        <td>2026-03-16</td>
-                        <td><span class="badge bg-danger">No Completada</span></td>
+                        <td class="ps-4">14.555.666-7</td>
+                        <td class="fw-bold text-black">Loreto Echeverría</td>
+                        <td>2026-03-12 a las 09:00</td>
+                        <td><span class="badge bg-danger shadow-sm px-3 py-2">No Completada</span></td>
                         <td class="text-center">
-                            <button class="btn btn-info btn-sm text-white" data-bs-toggle="modal" data-bs-target="#modalDetalle">
-                                <i class="fas fa-eye"></i> Ver Datos
+                            <button class="btn btn-info btn-sm text-white fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalDetalle">
+                                <i class="fas fa-eye me-1"></i> Ver Datos
                             </button>
                         </td>
                     </tr>
@@ -52,20 +52,43 @@ include 'includes/Header.php';
         </div>
     </div>
 
-    <div class="modal fade" id="modalDetalle" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-light">
-                    <h5 class="modal-title fw-bold text-black"><i class="fas fa-file-alt text-primary me-2"></i> Detalle de Solicitud</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal fade" id="modalDetalle" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-header border-0 pb-0 pt-4 px-4 bg-white text-center d-block">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-light text-muted border px-3 py-2 fw-bold">
+                            <i class="far fa-calendar-alt me-2"></i> 2026-03-10 a las 10:30
+                        </span>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="mx-auto bg-primary text-white d-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 60px; border-radius: 50%;">
+                        <i class="fas fa-user fs-3"></i>
+                    </div>
+                    <h4 class="fw-bold text-black mt-3 mb-1">Roberto Castillo</h4>
+                    <p class="text-muted small fw-bold mb-3">RUT: 11.222.333-4</p>
                 </div>
-                <div class="modal-body" id="contenido-detalle-modal">
-                    <p><strong>RUT:</strong> 12.345.678-9</p>
-                    <p><strong>Nombre Completo:</strong> Juan Pérez Gómez</p>
-                    <p><strong>Fecha y Hora:</strong> 16-03-2026 a las 10:30 hrs.</p>
-                    <hr>
-                    <p><strong>Motivo Extenso:</strong> Solicitud de fondos municipales para la reparación de la techumbre de la junta de vecinos #14 debido a los últimos temporales.</p>
-                    <p class="mb-0"><strong>Resolución / Estado:</strong> Completada. Derivado a Dirección de Obras.</p>
+                
+                <div class="modal-body px-4 pt-0 pb-4 bg-white">
+                    <hr class="border-secondary opacity-25 border-2 border-dashed my-3">
+                    
+                    <div class="bg-light p-3 rounded-3 mb-3 border">
+                        <span class="d-block text-muted small fw-bold mb-2 text-uppercase"><i class="fas fa-align-left me-1"></i> Motivo Extenso de la Consulta</span>
+                        <p class="text-black mb-0 fs-6" style="line-height: 1.5;">
+                            Solicitud de pavimentación en calle principal debido a los baches generados por las últimas lluvias. Se adjuntan firmas de vecinos.
+                        </p>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center p-3 bg-success-light border rounded-3 border-start-5" style="border-left: 5px solid #198754 !important;">
+                        <div>
+                            <span class="d-block text-muted small fw-bold text-uppercase">Resolución Final</span>
+                            <span class="fw-bold fs-5 text-success">Completada</span>
+                        </div>
+                        <div>
+                            <i class="fas fa-check-circle fs-1 text-success shadow-sm rounded-circle"></i>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -73,7 +96,4 @@ include 'includes/Header.php';
 
     <script src="../controller/assets/script.js/Historial.js"></script>
 
-<?php 
-// 2. Cargamos el Footer (Cierra el <main>, el contenedor y carga JS de Bootstrap)
-include 'includes/Footer.php'; 
-?>
+<?php include 'includes/Footer.php'; ?>
