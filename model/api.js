@@ -126,34 +126,34 @@ const apiAuditoria = {
     baseUrl: '../controller/auditoria_controller.php',
 
     // Leer pendientes para el Alcalde
-    getPendientes: async () => await procesarPeticion(`${apiAuditoria.baseUrl}?action=getPendientes`, { method: 'GET' }),
+    getPendientes: async () => await ProcesarPeticion(`${apiAuditoria.baseUrl}?action=getPendientes`, { method: 'GET' }),
     
     // Leer todo para la Secretaria
-    getGestionDiaria: async () => await procesarPeticion(`${apiAuditoria.baseUrl}?action=getGestionDiaria`, { method: 'GET' }),
+    getGestionDiaria: async () => await ProcesarPeticion(`${apiAuditoria.baseUrl}?action=getGestionDiaria`, { method: 'GET' }),
     
     // Cambiar estado (Botones del Alcalde)
-    cambiarEstado: async (id, nuevo_estado) => await procesarPeticion(apiAuditoria.baseUrl, {
+    cambiarEstado: async (id, nuevo_estado) => await ProcesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cambiarEstado', id: id, nuevo_estado: nuevo_estado })
     }),
     
     // Crear nueva (Secretaria)
-    createAuditoria: async (datos) => await procesarPeticion(apiAuditoria.baseUrl, {
+    createAuditoria: async (datos) => await ProcesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'createAuditoria', ...datos })
     }),
     
     // Editar (Secretaria)
-    updateAuditoria: async (datos) => await procesarPeticion(apiAuditoria.baseUrl, {
+    updateAuditoria: async (datos) => await ProcesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'updateAuditoria', ...datos })
     }),
     
     // Eliminar (Secretaria)
-    deleteAuditoria: async (id) => await procesarPeticion(apiAuditoria.baseUrl, {
+    deleteAuditoria: async (id) => await ProcesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'deleteAuditoria', id: id })
@@ -166,5 +166,5 @@ const apiAuditoria = {
 const apiHistorial = {
     baseUrl: '../controller/historial_controller.php',
 
-    getHistorialGeneral: async () => await procesarPeticion(`${apiHistorial.baseUrl}?action=getHistorialGeneral`, { method: 'GET' })
+    getHistorialGeneral: async () => await ProcesarPeticion(`${apiHistorial.baseUrl}?action=getHistorialGeneral`, { method: 'GET' })
 };
