@@ -44,7 +44,7 @@ CREATE TABLE auditoria (
     fecha DATE NOT NULL,
     hora TIME NOT NULL,
     nombre_solicitante VARCHAR(255) NOT NULL,
-    rut_solicitante INT NOT NULL,
+    rut_solicitante VARCHAR(15) NOT NULL,
     motivo VARCHAR(255) NOT NULL,
     id_estado INT NOT NULL,
     id_usuario INT NOT NULL,
@@ -57,10 +57,15 @@ CREATE TABLE historial(
     fecha DATE NOT NULL,
     hora TIME NOT NULL,
     nombre_solicitante VARCHAR(255) NOT NULL,
-    rut_solicitante INT NOT NULL,
+    rut_solicitante VARCHAR(15) NOT NULL,
     motivo VARCHAR(255) NOT NULL,
     id_estado INT NOT NULL,
     id_usuario INT NOT NULL,
     FOREIGN KEY (id_estado) REFERENCES estado_auditoria(id),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
 );
+
+/* Para Corregir base de datos wati
+
+ALTER TABLE auditoria MODIFY COLUMN rut_solicitante VARCHAR(15) NOT NULL;
+ALTER TABLE historial MODIFY COLUMN rut_solicitante VARCHAR(15) NOT NULL; */

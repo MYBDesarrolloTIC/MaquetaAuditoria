@@ -48,12 +48,12 @@ switch ($action) {
                     FROM auditoria a
                     INNER JOIN estado_auditoria e ON a.id_estado = e.id
                     WHERE e.nombre = 'Pendiente'
-                    ORDER BY a.fecha ASC, a.hora ASC"; 
-            
+                    ORDER BY a.fecha ASC, a.hora ASC";
+
             $stmt = $con->prepare($sql);
             $stmt->execute();
             $auditorias = $stmt->fetchAll();
-            
+
             echo json_encode(['status' => 1, 'data' => $auditorias]);
         } catch (PDOException $e) {
             echo json_encode(['status' => 0, 'message' => 'Error al obtener los datos.']);
@@ -99,7 +99,7 @@ switch ($action) {
                     FROM auditoria a
                     INNER JOIN estado_auditoria e ON a.id_estado = e.id
                     ORDER BY a.fecha DESC, a.hora DESC";
-            
+
             $stmt = $con->prepare($sql);
             $stmt->execute();
             $todas = $stmt->fetchAll();
@@ -112,29 +112,26 @@ switch ($action) {
 
     // --- CREAR NUEVA SOLICITUD ---
     case 'createAuditoria':
-        // Solo Secretaria y Admin pueden crear (Bloqueamos al Alcalde por si acaso)
         if (!in_array($tokenData['rol'], ['admin', 'secretaria'])) {
             echo json_encode(['status' => 0, 'message' => 'Solo secretaría o admin pueden crear solicitudes.']);
             exit;
         }
 
         try {
-            // Buscamos el ID del estado "Pendiente" (Por defecto toda solicitud nueva entra pendiente)
             $stmtEstado = $con->prepare("SELECT id FROM estado_auditoria WHERE nombre = 'Pendiente'");
             $stmtEstado->execute();
             $id_estado = $stmtEstado->fetchColumn();
 
-            // Guardamos usando el ID del usuario que está conectado (que viene en el token)
             $sql = "INSERT INTO auditoria (fecha, hora, nombre_solicitante, rut_solicitante, motivo, id_estado, id_usuario) 
                     VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = $con->prepare($sql);
             $stmt->execute([
-                $datos['fecha'], 
-                $datos['hora'], 
-                $datos['nombre_solicitante'], 
-                str_replace(['.', '-'], '', $datos['rut_solicitante']), // Limpiamos el RUT por si viene con puntos y guion
-                $datos['motivo'], 
-                $id_estado, 
+                $datos['fecha'],
+                $datos['hora'],
+                $datos['nombre_solicitante'],
+                $datos['rut_solicitante'], // ¡AQUÍ ESTÁ EL CAMBIO! Pasa directo.
+                $datos['motivo'],
+                $id_estado,
                 $tokenData['id']
             ]);
 
@@ -155,11 +152,11 @@ switch ($action) {
             $sql = "UPDATE auditoria SET fecha = ?, hora = ?, nombre_solicitante = ?, rut_solicitante = ?, motivo = ? WHERE id = ?";
             $stmt = $con->prepare($sql);
             $stmt->execute([
-                $datos['fecha'], 
-                $datos['hora'], 
-                $datos['nombre_solicitante'], 
-                str_replace(['.', '-'], '', $datos['rut_solicitante']), 
-                $datos['motivo'], 
+                $datos['fecha'],
+                $datos['hora'],
+                $datos['nombre_solicitante'],
+                $datos['rut_solicitante'], // ¡AQUÍ ESTÁ EL CAMBIO! Pasa directo.
+                $datos['motivo'],
                 $datos['id']
             ]);
 
@@ -191,4 +188,3 @@ switch ($action) {
         echo json_encode(['status' => 0, 'message' => 'Acción no reconocida.']);
         break;
 }
-?>
