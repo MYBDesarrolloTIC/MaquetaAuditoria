@@ -94,6 +94,6 @@ include 'includes/Header.php';
         </div>
     </div>
 
-    <script src="../controller/assets/script.js/Historial.js"></script>
+    <script src="../assets/js/Historial.js"></script>
 
 <?php include 'includes/Footer.php'; ?>

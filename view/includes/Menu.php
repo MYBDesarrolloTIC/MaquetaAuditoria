@@ -9,16 +9,19 @@
     </div>
 
     <div class="sidebar-nav">
-        <a href="VistaGestionAuditoria.php" class="nav-link-yb">
+        <a href="VistaGestionAuditoria.php" class="nav-link-yb" data-roles="admin,secretaria">
             <i class="fas fa-clipboard-list"></i> <span>Gestión</span>
         </a>
-        <a href="VistaHistorialAuditoria.php" class="nav-link-yb">
+        
+        <a href="VistaHistorialAuditoria.php" class="nav-link-yb" data-roles="admin,secretaria">
             <i class="fas fa-clipboard"></i> <span>Historial</span>
         </a>
-        <a href="VistaUsuario.php" class="nav-link-yb">
+        
+        <a href="VistaUsuario.php" class="nav-link-yb" data-roles="admin">
             <i class="fas fa-users-cog"></i> <span>Gestión Usuario</span>
         </a>
-        <a href="VistaListaAuditoria.php" class="nav-link-yb">
+        
+        <a href="VistaListaAuditoria.php" class="nav-link-yb" data-roles="admin,alcalde">
             <i class="fas fa-list"></i> <span>Lista Auditorias</span>
         </a>
     </div>
@@ -29,25 +32,3 @@
         </a>
     </div>
 </nav>
-
-<script>
-    function togglePin() {
-        document.getElementById("mySidebar").classList.toggle("pinned");
-    }
-
-    // Este script marca automáticamente en ROJO solo la página donde estás parado
-    document.addEventListener("DOMContentLoaded", function() {
-        const currentUrl = window.location.href.toLowerCase();
-        const navLinks = document.querySelectorAll('.nav-link-yb');
-        
-        navLinks.forEach(link => {
-            const linkHref = link.getAttribute('href').toLowerCase();
-            // Si la URL actual contiene el href de este botón, lo marca como active
-            if (currentUrl.includes(linkHref)) {
-                link.classList.add('active');
-            } else {
-                link.classList.remove('active');
-            }
-        });
-    });
-</script>

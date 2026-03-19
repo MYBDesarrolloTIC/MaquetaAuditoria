@@ -112,6 +112,26 @@
         </div>
     </div>
 
+    <div class="modal fade" id="modalEliminarUsuario" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px;">
+                <div class="modal-header border-0 py-4 px-5 bg-danger">
+                    <h4 class="modal-title fw-bold text-white mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Confirmar Eliminación</h4>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-5 bg-light text-center">
+                    <i class="fas fa-trash-alt text-danger mb-3" style="font-size: 4rem;"></i>
+                    <h5 class="fw-bold text-dark mb-3">¿Estás absolutamente seguro?</h5>
+                    <p class="text-muted mb-0">Esta acción eliminará al usuario del sistema y no se podrá deshacer.</p>
+                </div>
+                <div class="modal-footer border-0 bg-white justify-content-center pb-4">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger px-4 fw-bold" onclick="ejecutarEliminarUsuario()"><i class="fas fa-trash me-1"></i> Sí, Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="../model/api.js"></script>
     <script src="../assets/js/usuario.js"></script>
 

@@ -13,7 +13,78 @@ document.addEventListener("DOMContentLoaded", () => {
             filtrarTabla('tabla-historial-diario', termino);
         });
     }
+
+    // ==========================================
+    // AGREGAR EVENTOS DE FORMATEO A LOS RUT
+    // ==========================================
+    const inputsRut = ['crear-rut', 'editar-rut'];
+    inputsRut.forEach(id => {
+        const inputElement = document.getElementById(id);
+        if (inputElement) {
+            inputElement.addEventListener('input', function(e) {
+                // Formatea el valor mientras el usuario escribe
+                this.value = formatearRut(this.value);
+                
+                // Dar feedback visual usando clases de Bootstrap (verde si es válido, rojo si es inválido)
+                if (this.value.length >= 8) {
+                    if (validarRut(this.value)) {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    } else {
+                        this.classList.remove('is-valid');
+                        this.classList.add('is-invalid');
+                    }
+                } else {
+                    this.classList.remove('is-valid', 'is-invalid');
+                }
+            });
+        }
+    });
 });
+
+// ==========================================
+// FUNCIONES DE RUT (FORMATEO Y VALIDACIÓN)
+// ==========================================
+function formatearRut(rut) {
+    // Eliminar todo lo que no sea número o la letra K
+    let valor = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+    if (valor.length === 0) return '';
+    
+    // Separar cuerpo del dígito verificador
+    let cuerpo = valor.slice(0, -1);
+    let dv = valor.slice(-1);
+    
+    // Poner puntos cada 3 números en el cuerpo
+    cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    
+    // Unir cuerpo con guion y dígito verificador
+    return valor.length > 1 ? `${cuerpo}-${dv}` : valor;
+}
+
+function validarRut(rutCompleto) {
+    // Si no tiene el formato básico, es falso
+    if (!/^[0-9]+-[0-9kK]{1}$/.test(rutCompleto.replace(/\./g, ''))) return false;
+    
+    let valor = rutCompleto.replace(/[^0-9kK]/g, '').toUpperCase();
+    let cuerpo = valor.slice(0, -1);
+    let dv = valor.slice(-1);
+    
+    // Algoritmo Módulo 11 para validar RUT chileno
+    let suma = 0;
+    let multiplo = 2;
+    
+    for (let i = 1; i <= cuerpo.length; i++) {
+        let index = multiplo * valor.charAt(cuerpo.length - i);
+        suma = suma + index;
+        if (multiplo < 7) { multiplo = multiplo + 1; } else { multiplo = 2; }
+    }
+    
+    let dvEsperado = 11 - (suma % 11);
+    dvEsperado = (dvEsperado === 11) ? 0 : dvEsperado;
+    dvEsperado = (dvEsperado === 10) ? "K" : dvEsperado.toString();
+    
+    return dv === dvEsperado;
+}
 
 // ==========================================
 // 1. CARGAR DATOS REALES DESDE LA BD
@@ -40,10 +111,13 @@ async function cargarGestionDiaria() {
         res.data.forEach((item, index) => {
             if (item.estado === 'Pendiente') {
                 hayPendientes = true;
+                // Formatear el RUT antes de mostrarlo en la tabla para que se vea bonito
+                const rutFormateado = formatearRut(item.rut_solicitante.toString());
+                
                 tbodyPendientes.innerHTML += `
                     <tr class="fila-busqueda">
                         <td class="ps-4"><input type="checkbox" class="check-eliminar" value="${item.id}"></td>
-                        <td class="rut-col">${item.rut_solicitante}</td>
+                        <td class="rut-col">${rutFormateado}</td>
                         <td class="nombre-col">${item.nombre_solicitante}</td>
                         <td>${item.fecha}</td>
                         <td>${item.hora.substring(0, 5)}</td>
@@ -59,10 +133,11 @@ async function cargarGestionDiaria() {
                 const badgeClass = item.estado === 'Completada' ? 'bg-success' : 'bg-danger';
                 const rowClass = item.estado === 'Completada' ? 'bg-success-light' : 'bg-danger-yb-light';
                 const icon = item.estado === 'Completada' ? '✅' : '❌';
+                const rutFormateado = formatearRut(item.rut_solicitante.toString());
 
                 tbodyHistorial.innerHTML += `
                     <tr class="${rowClass} fila-busqueda">
-                        <td class="ps-4 rut-col">${item.rut_solicitante}</td>
+                        <td class="ps-4 rut-col">${rutFormateado}</td>
                         <td class="nombre-col">${item.nombre_solicitante}</td>
                         <td>${item.fecha}</td>
                         <td>${item.hora.substring(0, 5)}</td>
@@ -84,8 +159,20 @@ async function cargarGestionDiaria() {
 // 2. CREAR SOLICITUD
 // ==========================================
 async function guardarNuevaSolicitud() {
+    const rutIngresado = document.getElementById('crear-rut').value.trim();
+    
+    // Validar el RUT estrictamente antes de enviarlo
+    if (!validarRut(rutIngresado)) {
+        alert("El RUT ingresado no es válido. Por favor verifica e intenta nuevamente.");
+        document.getElementById('crear-rut').focus();
+        return;
+    }
+
+    // EL TRUCO DEFINITIVO: Le quitamos los puntos Y EL GUION para que pase como un número puro a la BD
+    const rutLimpioParaBD = rutIngresado.replace(/[\.\-]/g, '');
+
     const datos = {
-        rut_solicitante: document.getElementById('crear-rut').value.trim(),
+        rut_solicitante: rutLimpioParaBD, 
         nombre_solicitante: document.getElementById('crear-nombre').value.trim(),
         fecha: document.getElementById('crear-fecha').value,
         hora: document.getElementById('crear-hora').value,
@@ -97,17 +184,26 @@ async function guardarNuevaSolicitud() {
         return;
     }
 
-    const res = await apiAuditoria.createAuditoria(datos);
-    if (res.status === 1) {
-        // Cerramos el modal de forma segura
-        const modalEl = document.getElementById('modalCrear');
-        const modalObj = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-        modalObj.hide();
+    try {
+        const res = await apiAuditoria.createAuditoria(datos);
         
-        document.getElementById('form-crear-solicitud').reset();
-        cargarGestionDiaria(); // Recarga la tabla con el nuevo dato
-    } else {
-        alert("Error al guardar: " + res.message);
+        // Escudo protector: verificamos que 'res' exista antes de preguntar por su status
+        if (res && res.status === 1) {
+            const modalEl = document.getElementById('modalCrear');
+            const modalObj = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modalObj.hide();
+            
+            document.getElementById('form-crear-solicitud').reset();
+            document.getElementById('crear-rut').classList.remove('is-valid', 'is-invalid');
+            
+            cargarGestionDiaria(); 
+        } else if (res && res.message) {
+            alert("Error al guardar: " + res.message);
+        } else {
+            alert("Error del servidor: La base de datos rechazó el dato. Revisa la consola F12.");
+        }
+    } catch (e) {
+        alert("Error crítico de conexión al intentar guardar.");
     }
 }
 
@@ -118,7 +214,10 @@ function abrirModalEditar(index) {
     const item = datosGestion[index];
     
     document.getElementById('editar-id').value = item.id;
-    document.getElementById('editar-rut').value = item.rut_solicitante;
+    document.getElementById('editar-rut').value = formatearRut(item.rut_solicitante.toString());
+    document.getElementById('editar-rut').classList.remove('is-invalid'); 
+    document.getElementById('editar-rut').classList.add('is-valid');
+    
     document.getElementById('editar-nombre').value = item.nombre_solicitante;
     document.getElementById('editar-fecha').value = item.fecha;
     document.getElementById('editar-hora').value = item.hora.substring(0, 5);
@@ -130,27 +229,44 @@ function abrirModalEditar(index) {
 }
 
 async function guardarEdicion() {
+    const rutIngresado = document.getElementById('editar-rut').value.trim();
+    
+    if (!validarRut(rutIngresado)) {
+        alert("El RUT corregido no es válido. Por favor verifica e intenta nuevamente.");
+        document.getElementById('editar-rut').focus();
+        return;
+    }
+
+    // EL TRUCO DEFINITIVO: Quitamos puntos y guion
+    const rutLimpioParaBD = rutIngresado.replace(/[\.\-]/g, '');
+
     const datos = {
         id: document.getElementById('editar-id').value,
-        rut_solicitante: document.getElementById('editar-rut').value.trim(),
+        rut_solicitante: rutLimpioParaBD, 
         nombre_solicitante: document.getElementById('editar-nombre').value.trim(),
         fecha: document.getElementById('editar-fecha').value,
         hora: document.getElementById('editar-hora').value,
         motivo: document.getElementById('editar-motivo').value.trim()
     };
 
-    const res = await apiAuditoria.updateAuditoria(datos);
-    if (res.status === 1) {
-        const modalEl = document.getElementById('modalEditar');
-        const modalObj = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-        modalObj.hide();
+    try {
+        const res = await apiAuditoria.updateAuditoria(datos);
         
-        cargarGestionDiaria(); // Recarga la tabla actualizada
-    } else {
-        alert("Error al actualizar: " + res.message);
+        if (res && res.status === 1) {
+            const modalEl = document.getElementById('modalEditar');
+            const modalObj = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modalObj.hide();
+            
+            cargarGestionDiaria(); 
+        } else if (res && res.message) {
+            alert("Error al actualizar: " + res.message);
+        } else {
+            alert("Error del servidor: La base de datos rechazó la edición.");
+        }
+    } catch (e) {
+        alert("Error crítico de conexión al intentar actualizar.");
     }
 }
-
 // ==========================================
 // 4. ELIMINAR SOLICITUD CON SEGURIDAD
 // ==========================================
@@ -172,7 +288,7 @@ async function ejecutarEliminar() {
         modalObj.hide();
         
         idSolicitudAEliminar = null;
-        cargarGestionDiaria(); // Recarga la tabla sin el dato borrado
+        cargarGestionDiaria(); 
     } else {
         alert("Error al eliminar: " + res.message);
     }
@@ -185,12 +301,16 @@ function filtrarTabla(tablaId, termino) {
     const tbody = document.querySelector(`#${tablaId} tbody`);
     if (!tbody) return;
     
+    // Eliminamos los puntos y el guion del término de búsqueda para facilitar
+    const terminoLimpio = termino.replace(/[^0-9kK]/g, '');
+    
     const filas = tbody.querySelectorAll('tr.fila-busqueda');
     filas.forEach(fila => {
-        const rut = fila.querySelector('.rut-col').textContent.toLowerCase();
+        // Obtenemos el RUT de la tabla y también lo limpiamos para comparar
+        const rut = fila.querySelector('.rut-col').textContent.toLowerCase().replace(/[^0-9kK]/g, '');
         const nombre = fila.querySelector('.nombre-col').textContent.toLowerCase();
         
-        if (rut.includes(termino) || nombre.includes(termino)) {
+        if (rut.includes(terminoLimpio) || nombre.includes(termino)) {
             fila.style.display = '';
         } else {
             fila.style.display = 'none';

@@ -18,7 +18,6 @@ body, html {
     background-color: var(--yb-gray-bg) !important;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     overflow: hidden; /* Evita el doble scroll en la ventana principal */
-    /* Nota: NO usar display: flex aquí para evitar colapso visual */
 }
 
 /* =========================================
@@ -123,7 +122,9 @@ body, html {
     max-width: 1500px !important; 
     margin-left: auto !important; 
     margin-right: auto !important; 
-}/* =========================================
+}
+
+/* =========================================
    4. DISEÑO DEL MENÚ LATERAL INTERNO
    ========================================= */
 /* Ocultar textos cuando está colapsado */
@@ -190,29 +191,36 @@ body, html {
     color: var(--yb-blue) !important; 
 }
 
-/* EFECTO HOVER: Sombra y texto/ícono rojo */
-.nav-link-yb:hover:not(.active) {
-    background-color: #ffffff;
-    transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    color: var(--yb-red) !important;
+/* =========================================
+   EFECTO ACTIVO: Marcado en AZUL sólido
+   ========================================= */
+.sidebar-nav .nav-link-yb.active {
+    background-color: var(--yb-blue) !important; 
+    color: #ffffff !important;
+    border-radius: 0 10px 10px 0 !important; 
+    border-left: none !important; 
+    font-weight: 700 !important;
+    transform: translateX(5px) !important;
+    box-shadow: 0 4px 10px rgba(28, 53, 94, 0.4) !important;
 }
 
-.nav-link-yb:hover:not(.active) i {
-    color: var(--yb-red) !important;
+.sidebar-nav .nav-link-yb.active i { 
+    color: #ffffff !important; 
 }
 
-/* EFECTO ACTIVO: Marcado en rojo */
-.nav-link-yb.active {
-    background-color: rgba(218, 41, 28, 0.08) !important;
-    color: var(--yb-red) !important;
-    border-left: 6px solid var(--yb-red) !important;
+/* EFECTO HOVER: Al pasar el mouse también se ve azul */
+.sidebar-nav .nav-link-yb:hover:not(.active) {
+    background-color: #ffffff !important; 
+    transform: translateX(5px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important; 
+    color: var(--yb-blue) !important; 
 }
 
-.nav-link-yb.active i { 
-    color: var(--yb-red) !important; 
+.sidebar-nav .nav-link-yb:hover:not(.active) i {
+    color: var(--yb-blue) !important; 
 }
 
+/* FOOTER DEL MENÚ */
 .sidebar-footer {
     padding: 1.5rem;
     border-top: 1px solid #e9ecef;

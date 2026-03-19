@@ -1,5 +1,5 @@
-// assets/js/usuario.js
 let datosUsuariosGlobal = []; 
+let idUsuarioAEliminar = null; // <-- Variable clave para que el modal sepa a quién borrar
 
 document.addEventListener("DOMContentLoaded", () => {
     cargarListaUsuarios();
@@ -53,7 +53,8 @@ async function cargarListaUsuarios() {
                                 <button class="btn btn-sm btn-warning text-white fw-bold" onclick="abrirModalEditarUsuario(${index})">
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
-                                <button class="btn btn-sm btn-danger fw-bold" ${btnEliminarDisabled} onclick="eliminarUsuario(${u.id})">
+                                <!-- AQUÍ ESTÁ EL TRUCO: Ahora llama a abrirModalEliminarUsuario -->
+                                <button class="btn btn-sm btn-danger fw-bold" ${btnEliminarDisabled} onclick="abrirModalEliminarUsuario(${u.id})">
                                     <i class="fas fa-trash"></i> Eliminar
                                 </button>
                             </div>
@@ -122,20 +123,34 @@ async function guardarEdicionUsuario() {
     }
 }
 
-async function eliminarUsuario(id) {
-    if (confirm("¿Estás seguro de que deseas eliminar este usuario del sistema?")) {
-        const res = await apiUsuarios.deleteUsuario(id);
+// ==========================================
+// FUNCIONES PARA EL MODAL DE ELIMINAR 
+// ==========================================
+function abrirModalEliminarUsuario(id) {
+    idUsuarioAEliminar = id;
+    // Esto levanta tu modal rojo en lugar de la alerta del navegador
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEliminarUsuario')).show();
+}
+
+async function ejecutarEliminarUsuario() {
+    if (!idUsuarioAEliminar) return;
+
+    const res = await apiUsuarios.deleteUsuario(idUsuarioAEliminar);
+    
+    if (res.status === 1) {
+        // Escondemos el modal
+        bootstrap.Modal.getInstance(document.getElementById('modalEliminarUsuario')).hide();
         
-        if (res.status === 1) {
-            const tarjeta = document.getElementById(`tarjeta-user-${id}`);
-            if (tarjeta) {
-                tarjeta.style.transition = "opacity 0.3s ease, transform 0.3s ease";
-                tarjeta.style.opacity = "0";
-                tarjeta.style.transform = "scale(0.8)";
-                setTimeout(() => tarjeta.remove(), 300);
-            }
-        } else {
-            alert("Error al eliminar: " + res.message);
+        // Hacemos el efecto visual de borrar la tarjeta
+        const tarjeta = document.getElementById(`tarjeta-user-${idUsuarioAEliminar}`);
+        if (tarjeta) {
+            tarjeta.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+            tarjeta.style.opacity = "0";
+            tarjeta.style.transform = "scale(0.8)";
+            setTimeout(() => tarjeta.remove(), 300);
         }
+        idUsuarioAEliminar = null;
+    } else {
+        alert("Error al eliminar: " + res.message);
     }
 }
