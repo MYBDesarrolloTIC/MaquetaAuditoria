@@ -66,6 +66,4 @@ CREATE TABLE historial(
 );
 
 /* Para Corregir base de datos wati
-
-ALTER TABLE auditoria MODIFY COLUMN rut_solicitante VARCHAR(15) NOT NULL;
-ALTER TABLE historial MODIFY COLUMN rut_solicitante VARCHAR(15) NOT NULL; */
+ALTER TABLE historial ADD COLUMN resolucion TEXT NOT NULL AFTER motivo;*/

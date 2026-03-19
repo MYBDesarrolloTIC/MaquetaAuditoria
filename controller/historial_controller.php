@@ -35,18 +35,16 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 if ($action === 'getHistorialGeneral') {
     try {
-        // Traemos todas las auditorías EXCEPTO las que están en estado "Pendiente"
-        $sql = "SELECT a.id, a.fecha, a.hora, a.nombre_solicitante, a.rut_solicitante, a.motivo, e.nombre as estado 
-                FROM auditoria a
-                INNER JOIN estado_auditoria e ON a.id_estado = e.id
-                WHERE e.nombre != 'Pendiente'
-                ORDER BY a.fecha DESC, a.hora DESC"; 
+        // Ahora consultamos directamente a la tabla historial
+        $sql = "SELECT h.id, h.fecha, h.hora, h.nombre_solicitante, h.rut_solicitante, h.motivo, h.resolucion, e.nombre as estado 
+                FROM historial h
+                INNER JOIN estado_auditoria e ON h.id_estado = e.id
+                ORDER BY h.fecha DESC, h.hora DESC"; 
         
         $stmt = $con->prepare($sql);
         $stmt->execute();
         $historial = $stmt->fetchAll();
         
-        // Entregamos la data lista para que tu amigo la dibuje en su tabla
         echo json_encode(['status' => 1, 'data' => $historial]);
     } catch (PDOException $e) {
         echo json_encode(['status' => 0, 'message' => 'Error al obtener el historial general.']);

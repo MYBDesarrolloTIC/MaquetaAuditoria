@@ -62,8 +62,9 @@ switch ($action) {
 
     // --- CAMBIAR ESTADO DE AUDITORÍA (ALCALDE) ---
     case 'cambiarEstado':
-        if (!isset($datos['id']) || !isset($datos['nuevo_estado'])) {
-            echo json_encode(['status' => 0, 'message' => 'Faltan datos para actualizar.']);
+        // El JS de tu amigo envía la variable como 'comentario'
+        if (!isset($datos['id']) || !isset($datos['nuevo_estado']) || !isset($datos['comentario']) || trim($datos['comentario']) === '') {
+            echo json_encode(['status' => 0, 'message' => 'El comentario de resolución es obligatorio.']);
             exit;
         }
 
@@ -72,18 +73,38 @@ switch ($action) {
             $stmtEstado->execute([$datos['nuevo_estado']]);
             $id_estado = $stmtEstado->fetchColumn();
 
-            if (!$id_estado) {
-                echo json_encode(['status' => 0, 'message' => 'Estado no válido.']);
+            // 1. Extraemos los datos de la bandeja de entrada (auditoria)
+            $stmtSelect = $con->prepare("SELECT * FROM auditoria WHERE id = ?");
+            $stmtSelect->execute([$datos['id']]);
+            $auditoria = $stmtSelect->fetch();
+
+            if (!$auditoria) {
+                echo json_encode(['status' => 0, 'message' => 'La solicitud no existe o ya fue procesada.']);
                 exit;
             }
 
-            $sql = "UPDATE auditoria SET id_estado = ? WHERE id = ?";
-            $stmt = $con->prepare($sql);
-            $stmt->execute([$id_estado, $datos['id']]);
+            // 2. Insertamos en el historial sumando el comentario
+            $sqlInsert = "INSERT INTO historial (fecha, hora, nombre_solicitante, rut_solicitante, motivo, resolucion, id_estado, id_usuario) 
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmtInsert = $con->prepare($sqlInsert);
+            $stmtInsert->execute([
+                $auditoria['fecha'],
+                $auditoria['hora'],
+                $auditoria['nombre_solicitante'],
+                $auditoria['rut_solicitante'],
+                $auditoria['motivo'],
+                trim($datos['comentario']), // Aquí entra el texto del Alcalde
+                $id_estado,
+                $tokenData['id']
+            ]);
 
-            echo json_encode(['status' => 1, 'message' => 'Estado actualizado correctamente.']);
+            // 3. Borramos la solicitud de la bandeja de pendientes
+            $stmtDelete = $con->prepare("DELETE FROM auditoria WHERE id = ?");
+            $stmtDelete->execute([$datos['id']]);
+
+            echo json_encode(['status' => 1, 'message' => 'Audiencia resuelta y movida al historial.']);
         } catch (PDOException $e) {
-            echo json_encode(['status' => 0, 'message' => 'Error al actualizar el estado.']);
+            echo json_encode(['status' => 0, 'message' => 'Error al procesar la auditoría.']);
         }
         break;
 
@@ -94,11 +115,15 @@ switch ($action) {
     // --- LEER AUDITORÍAS DIARIAS (Pendientes e Historial) ---
     case 'getGestionDiaria':
         try {
-            // Extraemos todo, y que el frontend de tu amigo decida en qué tabla ponerlo
+            // Unimos ambas tablas para que la secretaria vea las pendientes y las ya resueltas
             $sql = "SELECT a.id, a.fecha, a.hora, a.nombre_solicitante, a.rut_solicitante, a.motivo, e.nombre as estado 
                     FROM auditoria a
                     INNER JOIN estado_auditoria e ON a.id_estado = e.id
-                    ORDER BY a.fecha DESC, a.hora DESC";
+                    UNION ALL 
+                    SELECT h.id, h.fecha, h.hora, h.nombre_solicitante, h.rut_solicitante, h.motivo, e.nombre as estado 
+                    FROM historial h
+                    INNER JOIN estado_auditoria e ON h.id_estado = e.id
+                    ORDER BY fecha DESC, hora DESC";
 
             $stmt = $con->prepare($sql);
             $stmt->execute();
