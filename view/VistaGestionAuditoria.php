@@ -6,9 +6,6 @@
             <p>Administración de audiencias y trámites diarios</p>
         </div>
         <div>
-            <button class="btn btn-danger me-2" onclick="alert('Función de eliminación múltiple en desarrollo')">
-                <i class="fas fa-trash"></i> Eliminar Seleccionados
-            </button>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrear">
                 <i class="fas fa-plus"></i> Crear Solicitud
             </button>
