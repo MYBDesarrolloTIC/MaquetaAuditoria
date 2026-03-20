@@ -20,7 +20,7 @@ $jwt = new JwtHandler();
 $tokenData = $jwt->validarToken($token);
 
 // El historial es una vista general, permitimos a los 3 roles
-if (!$tokenData || !in_array($tokenData['rol'], ['admin', 'alcalde', 'secretaria'])) {
+if (!$tokenData || !in_array($tokenData['rol'], ['admin', 'secretaria'])) {
     echo json_encode(['status' => 0, 'message' => 'Acceso denegado. Permisos insuficientes.']);
     exit;
 }

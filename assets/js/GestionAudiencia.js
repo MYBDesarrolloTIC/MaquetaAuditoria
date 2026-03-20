@@ -147,7 +147,7 @@ async function guardarNuevaSolicitud() {
         fecha: document.getElementById('crear-fecha').value,
         hora: document.getElementById('crear-hora').value,
         nombre_solicitante: document.getElementById('crear-nombre').value.trim(),
-        rut_solicitante: rutIngresado(/[\.\-]/g, ''), 
+        rut_solicitante: rutIngresado, 
         motivo: document.getElementById('crear-motivo').value.trim()
     };
 

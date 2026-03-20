@@ -59,11 +59,9 @@ CREATE TABLE historial(
     nombre_solicitante VARCHAR(255) NOT NULL,
     rut_solicitante VARCHAR(15) NOT NULL,
     motivo VARCHAR(255) NOT NULL,
+    resolucion TEXT NOT NULL,
     id_estado INT NOT NULL,
     id_usuario INT NOT NULL,
     FOREIGN KEY (id_estado) REFERENCES estado_auditoria(id),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id)
 );
-
-/* Para Corregir base de datos wati
-ALTER TABLE historial ADD COLUMN resolucion TEXT NOT NULL AFTER motivo;*/

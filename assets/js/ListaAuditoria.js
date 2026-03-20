@@ -7,7 +7,10 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarVisitasPendientes();
 
     // Inicializar el modal de Bootstrap
-    instanciaModal = new bootstrap.Modal(document.getElementById('modalConfirmarAccion'));
+    const modalEl = document.getElementById('modalConfirmarAccion');
+    if(modalEl){
+        instanciaModal = new bootstrap.Modal(modalEl);
+    }
 
     // Configurar el evento del botón de confirmación dentro del modal
     const btnEjecutar = document.getElementById('btnEjecutarAccion');
@@ -16,9 +19,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-/**
- * Carga las visitas en estado 'Pendiente' desde la base de datos
- */
+// ==========================================
+// 1. CARGAR VISITAS PENDIENTES
+// ==========================================
 async function cargarVisitasPendientes() {
     const contenedor = document.getElementById('contenedor-visitas');
     if (!contenedor) return;
@@ -53,7 +56,7 @@ async function cargarVisitasPendientes() {
                                     <i class="fas fa-check me-1"></i> Completada
                                 </button>
                                 <button type="button" class="btn btn-danger fw-bold px-4 shadow-sm" onclick="prepararAccion(${item.id}, 'No Completada')">
-                                    <i class="fas fa-times me-1"></i> Denegar
+                                    <i class="fas fa-times me-1"></i> Denegar / Incumplida
                                 </button>
                             </div>
                         </div>
@@ -74,18 +77,18 @@ async function cargarVisitasPendientes() {
     }
 }
 
-/**
- * Configura visualmente el modal según la acción y limpia el formulario
- */
+// ==========================================
+// 2. PREPARAR EL MODAL Y REINICIAR VALORES
+// ==========================================
 function prepararAccion(id, nuevoEstado) {
     idVisitaSeleccionada = id;
     estadoObjetivo = nuevoEstado;
 
-    // Resetear el campo de comentario y errores
+    // LIMPIEZA OBLIGATORIA: Vaciar el campo para forzar la escritura de nuevo
     const comentarioInput = document.getElementById('modal-comentario');
     const errorDiv = document.getElementById('error-comentario');
     comentarioInput.value = "";
-    comentarioInput.classList.remove('is-invalid');
+    comentarioInput.classList.remove('is-invalid', 'border-danger');
     errorDiv.style.display = 'none';
 
     const iconoContenedor = document.getElementById('modal-icono-contenedor');
@@ -94,64 +97,72 @@ function prepararAccion(id, nuevoEstado) {
     const texto = document.getElementById('modal-texto');
     const btnAccion = document.getElementById('btnEjecutarAccion');
 
+    // Cambiar la interfaz del Modal dependiendo del botón presionado
     if (nuevoEstado === 'Completada') {
-        // --- MODO VERDE: CONFIRMAR ---
         iconoContenedor.className = "text-success mb-4";
         icono.className = "fas fa-check-circle";
-        titulo.textContent = "¿Confirmar Visita?";
-        texto.textContent = "Ingrese una nota final sobre el resultado de la audiencia.";
+        titulo.textContent = "Audiencia Completada";
+        texto.textContent = "Por favor, redacte detalladamente en qué concluyó la reunión o qué acuerdos se tomaron.";
         
         btnAccion.className = "btn btn-success btn-lg fw-bold px-5 shadow-sm";
-        btnAccion.innerHTML = '<i class="fas fa-check me-2"></i> Confirmar';
+        btnAccion.innerHTML = '<i class="fas fa-check me-2"></i> Guardar Resolución';
     } else {
-        // --- MODO ROJO: DENEGAR ---
         iconoContenedor.className = "text-danger mb-4";
         icono.className = "fas fa-exclamation-triangle";
-        titulo.textContent = "¿Denegar Solicitud?";
-        texto.textContent = "Indique el motivo por el cual se deniega esta audiencia.";
+        titulo.textContent = "Audiencia Incumplida / Denegada";
+        texto.textContent = "Justifique obligatoriamente por qué faltó el ciudadano o se incumplió la audiencia.";
         
         btnAccion.className = "btn btn-danger btn-lg fw-bold px-5 shadow-sm";
-        btnAccion.innerHTML = '<i class="fas fa-times me-2"></i> Denegar';
+        btnAccion.innerHTML = '<i class="fas fa-times me-2"></i> Guardar Motivo';
     }
 
     instanciaModal.show();
 }
 
-/**
- * Valida que el comentario esté escrito antes de llamar a la API
- */
+// ==========================================
+// 3. VALIDAR OBLIGATORIEDAD Y ENVIAR A BD
+// ==========================================
 function validarYEnviar() {
     const comentarioInput = document.getElementById('modal-comentario');
     const errorDiv = document.getElementById('error-comentario');
+    
+    // .trim() evita que el usuario ponga espacios en blanco para saltarse la validación
     const comentarioVal = comentarioInput.value.trim();
 
     if (comentarioVal === "") {
-        comentarioInput.classList.add('is-invalid');
+        // Bloquear y mostrar los errores visuales
+        comentarioInput.classList.add('is-invalid', 'border-danger');
         errorDiv.style.display = 'block';
         comentarioInput.focus();
-        return;
+        return; // SE DETIENE AQUÍ, NO SE ENVÍA NADA
     }
 
-    // Si todo está bien, ocultamos error y enviamos
-    comentarioInput.classList.remove('is-invalid');
+    // Si todo está bien, ocultamos error y preparamos envío
+    comentarioInput.classList.remove('is-invalid', 'border-danger');
     errorDiv.style.display = 'none';
+    
+    // Bloquear el botón mientras carga para evitar doble clic
+    const btnAccion = document.getElementById('btnEjecutarAccion');
+    btnAccion.disabled = true;
+    btnAccion.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Procesando...';
+
     ejecutarCambioEstado(comentarioVal);
 }
 
-/**
- * Llama a la API para guardar el cambio de estado y el comentario
- */
+// ==========================================
+// 4. LLAMAR A LA API
+// ==========================================
 async function ejecutarCambioEstado(comentarioFinal) {
     if (!idVisitaSeleccionada || !estadoObjetivo) return;
 
     try {
-        // Asegúrate de que tu api.js envíe el tercer parámetro 'comentario'
+        // La API espera el ID, el Estado y el Comentario obligatorio
         const res = await apiAuditoria.cambiarEstado(idVisitaSeleccionada, estadoObjetivo, comentarioFinal);
         
         if (res.status === 1) {
             instanciaModal.hide();
 
-            // Animación de salida de la tarjeta específica
+            // Animación de salida de la tarjeta que ya se completó
             const tarjeta = document.getElementById(`tarjeta-visita-${idVisitaSeleccionada}`);
             if (tarjeta) {
                 tarjeta.style.transition = "all 0.4s ease";
@@ -162,11 +173,15 @@ async function ejecutarCambioEstado(comentarioFinal) {
                 cargarVisitasPendientes();
             }
         } else {
-            alert("Error: " + res.message);
+            alert("Error de validación del servidor: " + res.message);
         }
     } catch (error) {
-        alert("Ocurrió un error crítico al procesar la solicitud.");
+        alert("Ocurrió un error crítico de conexión al procesar la solicitud.");
     } finally {
+        // Restaurar el botón para futuras operaciones
+        const btnAccion = document.getElementById('btnEjecutarAccion');
+        if(btnAccion) btnAccion.disabled = false;
+        
         idVisitaSeleccionada = null;
         estadoObjetivo = null;
     }

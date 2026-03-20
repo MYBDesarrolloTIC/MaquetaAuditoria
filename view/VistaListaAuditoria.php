@@ -22,9 +22,12 @@
                 <p id="modal-texto" class="text-muted mb-4 fs-5"></p>
 
                 <div class="text-start mb-4">
-                    <label for="modal-comentario" class="form-label fw-bold text-muted small text-uppercase">Comentario / Observación Final (Obligatorio)</label>
-                    <textarea id="modal-comentario" class="form-control bg-light" rows="3" placeholder="Escriba aquí los detalles de la resolución..." required></textarea>
-                    <div id="error-comentario" class="text-danger small mt-1" style="display: none;">Este campo es obligatorio para continuar.</div>
+                    <label for="modal-comentario" class="form-label fw-bold text-dark small text-uppercase">Comentario / Observación Final <span class="text-danger">(Obligatorio)</span></label>
+                    <textarea id="modal-comentario" class="form-control bg-light border-2" rows="4" placeholder="Escriba detalladamente qué pasó o en qué concluyó la audiencia..." required></textarea>
+                    
+                    <div id="error-comentario" class="text-danger small mt-2 fw-bold" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i> Debes ingresar un comentario obligatorio para poder continuar.
+                    </div>
                 </div>
                 
                 <div class="d-flex justify-content-center gap-3">
