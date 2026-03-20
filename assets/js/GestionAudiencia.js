@@ -95,15 +95,17 @@ async function cargarGestionDiaria() {
             if (item.estado === 'Pendiente') {
                 hayPendientes = true;
                 tbodyPendientes.innerHTML += `
-                    <tr class="fila-busqueda">
+                  <tr class="fila-busqueda align-middle">
                         <td class="rut-col">${rutFormateado}</td>
                         <td class="nombre-col">${item.nombre_solicitante}</td>
                         <td>${item.fecha}</td>
                         <td>${item.hora.substring(0, 5)}</td>
                         <td>${item.motivo.substring(0, 40)}...</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-warning shadow-sm fw-bold text-dark" onclick="abrirModalEditar(${index})"><i class="fas fa-edit"></i> Editar</button>
-                            <button class="btn btn-sm btn-danger shadow-sm" onclick="abrirModalEliminar(${item.id})"><i class="fas fa-trash"></i></button>
+                        <td class="text-center" style="width: 120px;">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-sm btn-warning shadow-sm fw-bold text-dark" onclick="abrirModalEditar(${index})"><i class="fas fa-edit"></i> Editar</button>
+                                <button class="btn btn-sm btn-danger shadow-sm fw-bold" onclick="abrirModalEliminar(${item.id})"><i class="fas fa-trash"></i> Eliminar</button>
+                            </div>
                         </td>
                     </tr>`;
             } else {

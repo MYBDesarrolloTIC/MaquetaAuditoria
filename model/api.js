@@ -132,7 +132,7 @@ const apiAuditoria = {
     getGestionDiaria: async () => await ProcesarPeticion(`${apiAuditoria.baseUrl}?action=getGestionDiaria`, { method: 'GET' }),
     
     // Cambiar estado (Botones del Alcalde)
-    cambiarEstado: async (id, nuevo_estado, comentario) => await procesarPeticion(apiAuditoria.baseUrl, {
+    cambiarEstado: async (id, nuevo_estado, comentario) => await ProcesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cambiarEstado', id: id, nuevo_estado: nuevo_estado, comentario: comentario })

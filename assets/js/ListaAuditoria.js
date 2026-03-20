@@ -39,26 +39,29 @@ async function cargarVisitasPendientes() {
         if (res && res.status === 1 && res.data && res.data.length > 0) {
             res.data.forEach(item => {
                 contenedor.innerHTML += `
-                <div class="col-md-6 mb-4" id="tarjeta-visita-${item.id}">
-                    <div class="card shadow-sm border-0 h-100" style="border-left: 5px solid var(--yb-blue) !important;">
-                        <div class="card-body p-4">
+                <div class="col-md-6 col-lg-4 mb-4" id="tarjeta-visita-${item.id}">
+                    <div class="card text-center shadow-sm border-0 h-100 py-3" style="border-left: 5px solid var(--yb-blue) !important;">
+                        <div class="card-body">
                             <h5 class="card-title fw-bold text-black">${item.nombre_solicitante}</h5>
                             <h6 class="card-subtitle mb-3 text-muted">
-                                <i class="fas fa-id-card me-1"></i> RUT: ${item.rut_solicitante} | 
+                                <i class="fas fa-id-card me-1"></i> RUT: ${item.rut_solicitante} <br> 
                                 <i class="fas fa-clock me-1 text-warning"></i> Hora: ${item.hora.substring(0, 5)}
                             </h6>
-                            <p class="card-text bg-light p-3 rounded">
+                            <p class="card-text bg-light p-3 rounded text-start small">
                                 <strong class="text-primary"><i class="fas fa-comment-dots me-1"></i> Motivo original:</strong><br>
                                 ${item.motivo}
                             </p>
-                            <div class="d-flex justify-content-between mt-4">
-                                <button type="button" class="btn btn-success fw-bold px-4 shadow-sm" onclick="prepararAccion(${item.id}, 'Completada')">
-                                    <i class="fas fa-check me-1"></i> Completada
+                            
+                            <!-- AQUÍ ESTÁN LOS BOTONES EXACTAMENTE COMO EN LA VISTA USUARIOS -->
+                            <div class="d-grid gap-2 d-md-block mt-3">
+                                <button class="btn btn-sm btn-success text-white fw-bold shadow-sm" onclick="prepararAccion(${item.id}, 'Completada')">
+                                    <i class="fas fa-check"></i> Completada
                                 </button>
-                                <button type="button" class="btn btn-danger fw-bold px-4 shadow-sm" onclick="prepararAccion(${item.id}, 'No Completada')">
-                                    <i class="fas fa-times me-1"></i> Denegar / Incumplida
+                                <button class="btn btn-sm btn-danger fw-bold shadow-sm" onclick="prepararAccion(${item.id}, 'No Completada')">
+                                    <i class="fas fa-times"></i> Denegada
                                 </button>
                             </div>
+                            
                         </div>
                     </div>
                 </div>`;

@@ -31,7 +31,26 @@
                     </tr>
                 </thead>
                 <tbody>
-                    </tbody>
+                    <!-- EJEMPLO DE CÓMO TU JS DEBE GENERAR LA FILA PARA QUE LOS BOTONES SEAN IGUALES -->
+                    <!-- Nota la clase "table-actions-container" envolviendo los botones -->
+                    <tr>
+                        <td>21.665.534-6</td>
+                        <td>Ejemplo Ciudadano</td>
+                        <td>2023-10-25</td>
+                        <td>18:21</td>
+                        <td>ASDAD...</td>
+                        <td>
+                            <div class="table-actions-container">
+                                <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="editar(...)">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="eliminar(...)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -51,11 +70,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    </tbody>
+                    <!-- El JS genera esto -->
+                </tbody>
             </table>
         </div>
     </div>
 
+    <!-- MODAL CREAR -->
     <div class="modal fade" id="modalCrear" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
@@ -109,6 +130,7 @@
         </div>
     </div>
 
+    <!-- MODAL EDITAR -->
     <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
@@ -163,6 +185,7 @@
         </div>
     </div>
 
+    <!-- MODAL ELIMINAR -->
     <div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
@@ -178,6 +201,7 @@
             </div>
         </div>
     </div>
+
 <script src="../model/api.js"></script>
 <script src="../assets/js/GestionAudiencia.js"></script>
 
