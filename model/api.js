@@ -124,26 +124,27 @@ const ProcesarPeticion = async (url, opciones) => {
    ========================================================================= */
 const apiAuditoria = {
     baseUrl: '../controller/auditoria_controller.php',
+    // Buscar ciudadano por RUT o Nombre para autocompletar
+    buscarCiudadano: async (termino) => await procesarPeticion(`${apiAuditoria.baseUrl}?action=buscarCiudadano&termino=${termino}`, { method: 'GET' }),
 
     // Leer pendientes para el Alcalde
-    getPendientes: async () => await ProcesarPeticion(`${apiAuditoria.baseUrl}?action=getPendientes`, { method: 'GET' }),
+    getPendientes: async () => await procesarPeticion(`${apiAuditoria.baseUrl}?action=getPendientes`, { method: 'GET' }),
     
     // Leer todo para la Secretaria
-    getGestionDiaria: async () => await ProcesarPeticion(`${apiAuditoria.baseUrl}?action=getGestionDiaria`, { method: 'GET' }),
-    // (AÑADIR ESTAS DOS FUNCIONES ADENTRO DE apiAuditoria)
+    getGestionDiaria: async () => await procesarPeticion(`${apiAuditoria.baseUrl}?action=getGestionDiaria`, { method: 'GET' }),
 
     // Obtener las derivaciones pendientes del usuario actual
-    getMisDerivaciones: async () => await ProcesarPeticion(`${apiAuditoria.baseUrl}?action=getMisDerivaciones`, { method: 'GET' }),
+    getMisDerivaciones: async () => await procesarPeticion(`${apiAuditoria.baseUrl}?action=getMisDerivaciones`, { method: 'GET' }),
     
     // Marcar una derivación como resuelta/completada
-    resolverDerivacion: async (id, comentario) => await ProcesarPeticion(apiAuditoria.baseUrl, {
+    resolverDerivacion: async (id, comentario) => await procesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'resolverDerivacion', id: id, comentario: comentario })
     }),
     
     // Derivar (Ahora sí envía los 3 datos obligatorios a tu backend)
-    derivarAuditoria: async (id, usuarioDestino, comentario) => await ProcesarPeticion(apiAuditoria.baseUrl, {
+    derivarAuditoria: async (id, usuarioDestino, comentario) => await procesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -155,27 +156,28 @@ const apiAuditoria = {
     }),
 
     // Cambiar estado (Botones del Alcalde)
-    cambiarEstado: async (id, nuevo_estado, comentario) => await ProcesarPeticion(apiAuditoria.baseUrl, {
+    cambiarEstado: async (id, nuevo_estado, comentario) => await procesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cambiarEstado', id: id, nuevo_estado: nuevo_estado, comentario: comentario })
     }),
+    
     // Crear nueva (Secretaria)
-    createAuditoria: async (datos) => await ProcesarPeticion(apiAuditoria.baseUrl, {
+    createAuditoria: async (datos) => await procesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'createAuditoria', ...datos })
     }),
     
     // Editar (Secretaria)
-    updateAuditoria: async (datos) => await ProcesarPeticion(apiAuditoria.baseUrl, {
+    updateAuditoria: async (datos) => await procesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'updateAuditoria', ...datos })
     }),
     
     // Eliminar (Secretaria)
-    deleteAuditoria: async (id) => await ProcesarPeticion(apiAuditoria.baseUrl, {
+    deleteAuditoria: async (id) => await procesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'deleteAuditoria', id: id })
@@ -189,5 +191,5 @@ const apiAuditoria = {
 const apiHistorial = {
     baseUrl: '../controller/historial_controller.php',
 
-    getHistorialGeneral: async () => await ProcesarPeticion(`${apiHistorial.baseUrl}?action=getHistorialGeneral`, { method: 'GET' })
+    getHistorialGeneral: async () => await procesarPeticion(`${apiHistorial.baseUrl}?action=getHistorialGeneral`, { method: 'GET' })
 };

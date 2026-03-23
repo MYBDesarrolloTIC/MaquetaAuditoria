@@ -7,41 +7,13 @@
     </div>
 </div>
 
-<div class="row mt-4" id="contenedor-visitas">
-    <!-- NOTA PARA TI: Así es como tu JS debe generar cada tarjeta ahora -->
-    <!-- Te dejo este bloque de ejemplo para que veas la estructura de los botones horizontales -->
-    <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card shadow-sm h-100 border-start-blue">
-            <div class="card-body">
-                <h5 class="fw-bold text-dark">Nombre del Ciudadano</h5>
-                <p class="text-muted small mb-3">
-                    <i class="fas fa-id-card"></i> RUT: 12345678-9 | <i class="fas fa-clock text-warning"></i> Hora: 16:24
-                </p>
-                <div class="bg-light p-3 rounded mb-3">
-                    <span class="text-primary fw-bold"><i class="fas fa-comment-dots"></i> Motivo original:</span><br>
-                    <span class="text-dark">Descripción de la solicitud...</span>
-                </div>
-            </div>
-            
-            <!-- AQUI ESTÁ LA MAGIA PARA LOS BOTONES HORIZONTALES -->
-            <div class="card-footer bg-white border-0 pt-0 pb-3 mt-auto">
-                <div class="d-flex justify-content-between gap-2">
-                    <button class="btn btn-success flex-fill fw-bold shadow-sm" onclick="abrirModalAccion('Completada', /* ID */)">
-                        <i class="fas fa-check me-1"></i> Completada
-                    </button>
-                    <button class="btn btn-danger flex-fill fw-bold shadow-sm" onclick="abrirModalAccion('Incumplida', /* ID */)">
-                        <i class="fas fa-times me-1"></i> Denegada
-                    </button>
-                </div>
-            </div>
-            <!-- FIN DE LA MAGIA -->
-
-        </div>
-    </div>
-    <!-- Fin del bloque de ejemplo -->
+<div class="mb-4 bg-white p-3 shadow-sm" style="border-radius: 12px;">
+    <input type="text" id="buscador-visitas" class="form-control form-control-lg bg-light border-0" placeholder="🔍 Buscar por RUT, Nombre, Apellido o Motivo...">
 </div>
 
-<!-- Modal para confirmar la acción -->
+<div class="row mt-4" id="contenedor-visitas">
+    </div>
+
 <div class="modal fade" id="modalConfirmarAccion" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">

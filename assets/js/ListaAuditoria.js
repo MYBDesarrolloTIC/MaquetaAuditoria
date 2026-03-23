@@ -6,18 +6,36 @@ let listaUsuariosGlobal = []; // Para almacenar los usuarios a derivar
 
 document.addEventListener("DOMContentLoaded", () => {
     cargarVisitasPendientes();
-    cargarUsuariosParaDerivar(); // Cargar la lista de usuarios al iniciar
+    cargarUsuariosParaDerivar(); // (Si aplica según tu versión anterior)
 
-    // Inicializar el modal de Bootstrap
     const modalEl = document.getElementById('modalConfirmarAccion');
     if(modalEl){
         instanciaModal = new bootstrap.Modal(modalEl);
     }
 
-    // Configurar el evento del botón de confirmación dentro del modal
     const btnEjecutar = document.getElementById('btnEjecutarAccion');
     if (btnEjecutar) {
         btnEjecutar.addEventListener('click', validarYEnviar);
+    }
+
+    // === NUEVO: CÓDIGO DEL BUSCADOR ===
+    const buscador = document.getElementById('buscador-visitas');
+    if (buscador) {
+        buscador.addEventListener('input', function () {
+            const termino = this.value.toLowerCase().trim();
+            // Seleccionar todas las columnas (tarjetas) dentro del contenedor
+            const tarjetas = document.querySelectorAll('#contenedor-visitas > div.col-md-6');
+            
+            tarjetas.forEach(tarjeta => {
+                const textoTarjeta = tarjeta.textContent.toLowerCase();
+                // Si el texto de la tarjeta incluye lo que escribimos, la mostramos, sino la ocultamos
+                if (textoTarjeta.includes(termino)) {
+                    tarjeta.style.display = '';
+                } else {
+                    tarjeta.style.display = 'none';
+                }
+            });
+        });
     }
 });
 
@@ -173,14 +191,14 @@ function prepararAccion(id, nuevoEstado) {
             selectUsuario.innerHTML += `<option value="${u.id}">${u.nombre} (${u.rol})</option>`;
         });
 
-        // CAMBIADO A AMARILLO (warning)
-        iconoContenedor.className = "text-warning mb-4";
+        // CAMBIADO A AZUL (primary)
+        iconoContenedor.className = "text-primary mb-4";
         icono.className = "fas fa-share-square";
         titulo.textContent = "Derivar Audiencia";
         texto.textContent = "Seleccione a quién asignar esta petición y deje un comentario o instrucciones.";
         
-        // CAMBIADO EL BOTÓN A AMARILLO OSCURO (btn-warning text-dark)
-        btnAccion.className = "btn btn-warning text-dark btn-lg fw-bold px-5 shadow-sm";
+        // CAMBIADO EL BOTÓN A AZUL (btn-primary text-white)
+        btnAccion.className = "btn btn-primary text-white btn-lg fw-bold px-5 shadow-sm";
         btnAccion.innerHTML = '<i class="fas fa-paper-plane me-2"></i> Derivar Petición';
     }
 

@@ -8,6 +8,26 @@ document.addEventListener("DOMContentLoaded", () => {
     if(modalEl) {
         modalResolucion = new bootstrap.Modal(modalEl);
     }
+
+    // === NUEVO: CÓDIGO DEL BUSCADOR ===
+    const buscador = document.getElementById('buscador-derivaciones');
+    if (buscador) {
+        buscador.addEventListener('input', function () {
+            const termino = this.value.toLowerCase().trim();
+            // Seleccionar todas las columnas (tarjetas) dentro del contenedor
+            const tarjetas = document.querySelectorAll('#contenedor-derivaciones > div.col-md-6');
+            
+            tarjetas.forEach(tarjeta => {
+                const textoTarjeta = tarjeta.textContent.toLowerCase();
+                // Ocultar o mostrar dinámicamente
+                if (textoTarjeta.includes(termino)) {
+                    tarjeta.style.display = '';
+                } else {
+                    tarjeta.style.display = 'none';
+                }
+            });
+        });
+    }
 });
 
 // ==========================================
@@ -52,7 +72,7 @@ async function cargarMisDerivaciones() {
                             <div class="bg-warning bg-opacity-10 p-3 rounded mb-3 text-start small border border-warning border-opacity-25">
                                 <strong class="text-warning-dark"><i class="fas fa-share me-1"></i> Instrucciones de Derivación:</strong><br>
                                 <span class="text-dark fw-medium">${item.comentario_derivacion || 'Sin instrucciones adicionales.'}</span>
-                            </div>
+                            </div> 
                             
                             <div class="d-grid mt-auto">
                                 <button class="btn btn-success fw-bold shadow-sm py-2" onclick="prepararResolucion(${item.id})">

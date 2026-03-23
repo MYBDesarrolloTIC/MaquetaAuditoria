@@ -525,3 +525,204 @@ body, html {
     0% { transform: translateX(-100%) scale(0.9); opacity: 0; } 
     100% { transform: translateX(0) scale(1); opacity: 1; } 
 }
+
+/* =========================================================================
+   10. ANIMACIONES PARA MODALES (EFECTO POP AL ABRIR Y MINIMIZAR AL CERRAR)
+   ========================================================================= */
+
+/* ESTADO INICIAL Y AL CERRAR (Efecto de Minimizar) 
+   Cuando cierras el modal (Bootstrap le quita la clase .show), el modal 
+   se encoge hacia el centro (scale 0.5) y se desvanece suavemente. */
+.modal.fade .modal-dialog {
+    transform: scale(0.5) !important;
+    opacity: 0 !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out !important;
+}
+
+/* ESTADO ABIERTO (Efecto "Pop-up")
+   Cuando abres el modal (Bootstrap le añade la clase .show), el modal 
+   crece con un sutil y elegante rebote hasta su tamaño normal. */
+.modal.fade.show .modal-dialog {
+    transform: scale(1) !important;
+    opacity: 1 !important;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease !important;
+}
+
+/* Fondo oscuro (backdrop) con efecto blur tipo cristal */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+}
+.modal-backdrop.show {
+    opacity: 1 !important;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+/* =========================================================================
+   11. ANIMACIONES INTERNAS DE MODALES Y BUSCADORES (IDA Y VUELTA)
+   ========================================================================= */
+
+/* 1. Animación de los buscadores (Mismo efecto hover que las tablas) */
+[id^="buscador-"] {
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease !important;
+}
+
+[id^="buscador-"]:hover,
+[id^="buscador-"]:focus {
+    transform: scale(1.015);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08) !important;
+    border-color: var(--yb-red) !important;
+    z-index: 10;
+    position: relative;
+    outline: none;
+}
+
+/* =========================================================================
+   ESTADO INICIAL (OCULTO / CERRANDO)
+   Así es como se esconden los elementos cuando el modal se cierra
+   ========================================================================= */
+.modal .modal-header {
+    transform: translateY(-20px);
+    opacity: 0;
+    transition: transform 0.3s ease-in, opacity 0.2s ease-in;
+}
+
+.modal .modal-body > form,
+.modal .modal-body > div {
+    transform: translateY(30px);
+    opacity: 0;
+    transition: transform 0.3s ease-in, opacity 0.2s ease-in;
+}
+
+.modal .modal-body i[style*="font-size: 5rem"],
+.modal .modal-body #modal-icono {
+    transform: scale(0.2) rotate(-15deg);
+    opacity: 0;
+    transition: transform 0.3s ease-in, opacity 0.2s ease-in;
+}
+
+/* =========================================================================
+   ESTADO FINAL (ABIERTO / MOSTRANDO)
+   Así entran los elementos cuando Bootstrap agrega la clase .show
+   ========================================================================= */
+.modal.show .modal-header {
+    transform: translateY(0);
+    opacity: 1;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
+}
+
+.modal.show .modal-body > form,
+.modal.show .modal-body > div {
+    transform: translateY(0);
+    opacity: 1;
+    /* El "0.1s" al final es un pequeño retraso para que entre después del encabezado */
+    transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s, opacity 0.5s ease 0.1s;
+}
+
+.modal.show .modal-body i[style*="font-size: 5rem"],
+.modal.show .modal-body #modal-icono {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+    transition: transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s, opacity 0.5s ease 0.1s;
+}
+
+/* =========================================================================
+   KEYFRAMES (Las instrucciones de los movimientos)
+   ========================================================================= */
+@keyframes slideDownFade {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIconBounce {
+    0% { opacity: 0; transform: scale(0.2) rotate(-15deg); }
+    50% { transform: scale(1.15) rotate(5deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+/* =========================================================================
+   12. ANIMACIÓN PARA EL CHECKBOX Y SU DESPLIEGUE (ENCENDIDO Y APAGADO)
+   ========================================================================= */
+
+/* 1. Efecto "Pop" satisfactorio en el botón switch al ACTIVARLO */
+.form-switch .form-check-input:checked {
+    animation: popSwitch 0.3s ease-out forwards;
+    background-color: var(--yb-red) !important;
+    border-color: var(--yb-red) !important;
+}
+
+/* 2. Efecto al DESACTIVAR el checkbox (Encogimiento suave) */
+.form-switch .form-check-input:not(:checked) {
+    animation: popSwitchOff 0.3s ease-in-out forwards;
+}
+
+/* 3. Animación de apertura para el bloque de texto */
+#wrapper-discapacidad:not(.d-none),
+#editar-wrapper-discapacidad:not(.d-none) {
+    animation: desplegarSuave 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    transform-origin: top center;
+    overflow: hidden;
+}
+
+/* 4. TRUCO MÁGICO: Animación de cierre SIN tocar JS/HTML */
+/* Sobrescribimos el d-none de Bootstrap solo para estos contenedores para poder animarlos */
+#wrapper-discapacidad.d-none,
+#editar-wrapper-discapacidad.d-none {
+    display: block !important; /* Forzamos a que siga en pantalla unos milisegundos */
+    animation: plegarSuave 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    transform-origin: top center;
+    pointer-events: none; /* Evita clics mientras desaparece */
+    overflow: hidden;
+}
+
+/* =========================================================================
+   KEYFRAMES DE LOS EFECTOS
+   ========================================================================= */
+@keyframes popSwitch {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15) translateX(2px); }
+    100% { transform: scale(1); }
+}
+
+@keyframes popSwitchOff {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.85) translateX(-2px); }
+    100% { transform: scale(1); }
+}
+
+@keyframes desplegarSuave {
+    0% {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-15px) scaleY(0.8);
+    }
+    100% {
+        opacity: 1;
+        max-height: 150px; 
+        transform: translateY(0) scaleY(1);
+    }
+}
+
+@keyframes plegarSuave {
+    0% {
+        opacity: 1;
+        max-height: 150px;
+        transform: translateY(0) scaleY(1);
+        margin-top: 0.5rem; /* El equivalente al margen mt-2 */
+    }
+    100% {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-15px) scaleY(0.8);
+        margin-top: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border: none;
+        visibility: hidden; /* Lo oculta completamente al final */
+    }
+}

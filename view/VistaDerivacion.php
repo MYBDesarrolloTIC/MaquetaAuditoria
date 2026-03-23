@@ -7,6 +7,10 @@
     </div>
 </div>
 
+<div class="mb-4 bg-white p-3 shadow-sm" style="border-radius: 12px;">
+    <input type="text" id="buscador-derivaciones" class="form-control form-control-lg bg-light border-0" placeholder="🔍 Buscar por RUT, Nombre, Apellido o Motivo...">
+</div>
+
 <div class="row mt-4" id="contenedor-derivaciones">
     </div>
 
