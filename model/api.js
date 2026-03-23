@@ -142,6 +142,18 @@ const apiAuditoria = {
         body: JSON.stringify({ action: 'resolverDerivacion', id: id, comentario: comentario })
     }),
     
+    // Derivar (Ahora sí envía los 3 datos obligatorios a tu backend)
+    derivarAuditoria: async (id, usuarioDestino, comentario) => await ProcesarPeticion(apiAuditoria.baseUrl, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            action: 'derivarAuditoria', 
+            id: id, 
+            usuario_destino: usuarioDestino, 
+            comentario: comentario 
+        })
+    }),
+
     // Cambiar estado (Botones del Alcalde)
     cambiarEstado: async (id, nuevo_estado, comentario) => await ProcesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 

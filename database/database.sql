@@ -10,7 +10,7 @@ CREATE TABLE estado_auditoria (
     nombre VARCHAR(50) NOT NULL
 );
 
-INSERT INTO estado_auditoria (nombre) VALUES ('Pendiente'), ('Completada'), ('No Completada');
+INSERT INTO estado_auditoria (nombre) VALUES ('Pendiente'), ('Completada'), ('No Completada'),('Derivada');
 
 CREATE TABLE roles(
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -21,7 +21,9 @@ CREATE TABLE roles(
 INSERT INTO roles (nombre) VALUES 
 ('admin'),
 ('alcalde'),
-('secretaria');
+('secretaria'),
+('director');
+
 
 -- Crear usuarios
 CREATE TABLE usuarios ( 
