@@ -43,6 +43,7 @@
                                     <option value="admin">Administrador</option>
                                     <option value="alcalde">Alcalde</option>
                                     <option value="secretaria">Secretaria</option>
+                                    <option value="director">Director</option>
                                 </select>
                             </div>
                             <div class="col-6 mb-3">
