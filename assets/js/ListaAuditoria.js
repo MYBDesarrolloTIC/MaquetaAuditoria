@@ -2,9 +2,11 @@
 let idVisitaSeleccionada = null;
 let estadoObjetivo = null;
 let instanciaModal = null;
+let listaUsuariosGlobal = []; // Para almacenar los usuarios a derivar
 
 document.addEventListener("DOMContentLoaded", () => {
     cargarVisitasPendientes();
+    cargarUsuariosParaDerivar(); // Cargar la lista de usuarios al iniciar
 
     // Inicializar el modal de Bootstrap
     const modalEl = document.getElementById('modalConfirmarAccion');
@@ -20,7 +22,22 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 1. CARGAR VISITAS PENDIENTES
+// 1. CARGAR USUARIOS PARA EL SELECT
+// ==========================================
+async function cargarUsuariosParaDerivar() {
+    try {
+        // Usamos la API existente de usuarios para traer la lista
+        const res = await apiUsuarios.getUsuarios();
+        if (res && res.status === 1 && res.data) {
+            // Guardamos solo los usuarios activos
+            listaUsuariosGlobal = res.data.filter(u => u.estado === 'Activo' || u.estado === 1);
+        }
+    } catch (error) {
+        console.error("Error al cargar la lista de usuarios para derivación:", error);
+    }
+}
+// ==========================================
+// 2. CARGAR VISITAS PENDIENTES
 // ==========================================
 async function cargarVisitasPendientes() {
     const contenedor = document.getElementById('contenedor-visitas');
@@ -52,12 +69,14 @@ async function cargarVisitasPendientes() {
                                 ${item.motivo}
                             </p>
                             
-                            <!-- AQUÍ ESTÁN LOS BOTONES EXACTAMENTE COMO EN LA VISTA USUARIOS -->
-                            <div class="d-grid gap-2 d-md-block mt-3">
-                                <button class="btn btn-sm btn-success text-white fw-bold shadow-sm" onclick="prepararAccion(${item.id}, 'Completada')">
+                            <div class="d-flex justify-content-center gap-3 mt-3 flex-wrap">
+                                <button class="btn btn-sm btn-success text-white fw-bold shadow-sm px-3" onclick="prepararAccion(${item.id}, 'Completada')">
                                     <i class="fas fa-check"></i> Completada
                                 </button>
-                                <button class="btn btn-sm btn-danger fw-bold shadow-sm" onclick="prepararAccion(${item.id}, 'No Completada')">
+                                <button class="btn btn-sm btn-warning text-dark fw-bold shadow-sm px-3" onclick="prepararAccion(${item.id}, 'Derivar')">
+                                    <i class="fas fa-share"></i> Derivar
+                                </button>
+                                <button class="btn btn-sm btn-danger fw-bold shadow-sm px-3" onclick="prepararAccion(${item.id}, 'No Completada')">
                                     <i class="fas fa-times"></i> Denegada
                                 </button>
                             </div>
@@ -79,15 +98,13 @@ async function cargarVisitasPendientes() {
         contenedor.innerHTML = `<div class="col-12"><div class="alert alert-danger text-center">Error al conectar con el servidor.</div></div>`;
     }
 }
-
 // ==========================================
-// 2. PREPARAR EL MODAL Y REINICIAR VALORES
+// 3. PREPARAR EL MODAL Y REINICIAR VALORES
 // ==========================================
 function prepararAccion(id, nuevoEstado) {
     idVisitaSeleccionada = id;
     estadoObjetivo = nuevoEstado;
 
-    // LIMPIEZA OBLIGATORIA: Vaciar el campo para forzar la escritura de nuevo
     const comentarioInput = document.getElementById('modal-comentario');
     const errorDiv = document.getElementById('error-comentario');
     comentarioInput.value = "";
@@ -100,8 +117,35 @@ function prepararAccion(id, nuevoEstado) {
     const texto = document.getElementById('modal-texto');
     const btnAccion = document.getElementById('btnEjecutarAccion');
 
+    // === CREAR/BUSCAR EL SELECT DE USUARIOS DINÁMICAMENTE ===
+    let selectContenedor = document.getElementById('contenedor-select-derivar');
+    if (!selectContenedor) {
+        selectContenedor = document.createElement('div');
+        selectContenedor.id = 'contenedor-select-derivar';
+        selectContenedor.className = 'text-start mb-3';
+        selectContenedor.innerHTML = `
+            <label class="form-label fw-bold text-dark small text-uppercase">Derivar a <span class="text-danger">(Obligatorio)</span></label>
+            <select id="modal-select-usuario" class="form-select bg-light border-2">
+                <option value="">Seleccione un usuario...</option>
+            </select>
+            <div id="error-select" class="text-danger small mt-2 fw-bold" style="display: none;">
+                <i class="fas fa-exclamation-circle"></i> Debes seleccionar a quién derivar esta petición.
+            </div>
+        `;
+        // Lo insertamos justo antes del campo de comentario
+        const contenedorComentario = comentarioInput.parentElement;
+        contenedorComentario.parentElement.insertBefore(selectContenedor, contenedorComentario);
+    }
+
+    const selectUsuario = document.getElementById('modal-select-usuario');
+    const errorSelect = document.getElementById('error-select');
+    selectUsuario.classList.remove('is-invalid', 'border-danger');
+    errorSelect.style.display = 'none';
+    selectUsuario.value = ""; // Limpiarlo
+
     // Cambiar la interfaz del Modal dependiendo del botón presionado
     if (nuevoEstado === 'Completada') {
+        selectContenedor.style.display = 'none'; // Ocultar dropdown
         iconoContenedor.className = "text-success mb-4";
         icono.className = "fas fa-check-circle";
         titulo.textContent = "Audiencia Completada";
@@ -109,7 +153,9 @@ function prepararAccion(id, nuevoEstado) {
         
         btnAccion.className = "btn btn-success btn-lg fw-bold px-5 shadow-sm";
         btnAccion.innerHTML = '<i class="fas fa-check me-2"></i> Guardar Resolución';
-    } else {
+
+    } else if (nuevoEstado === 'No Completada') {
+        selectContenedor.style.display = 'none'; // Ocultar dropdown
         iconoContenedor.className = "text-danger mb-4";
         icono.className = "fas fa-exclamation-triangle";
         titulo.textContent = "Audiencia Incumplida / Denegada";
@@ -117,50 +163,93 @@ function prepararAccion(id, nuevoEstado) {
         
         btnAccion.className = "btn btn-danger btn-lg fw-bold px-5 shadow-sm";
         btnAccion.innerHTML = '<i class="fas fa-times me-2"></i> Guardar Motivo';
+
+    } else if (nuevoEstado === 'Derivar') {
+        selectContenedor.style.display = 'block'; // Mostrar dropdown
+        
+        // Llenar el select con los usuarios cargados
+        selectUsuario.innerHTML = '<option value="">Seleccione un usuario...</option>';
+        listaUsuariosGlobal.forEach(u => {
+            selectUsuario.innerHTML += `<option value="${u.id}">${u.nombre} (${u.rol})</option>`;
+        });
+
+        // CAMBIADO A AMARILLO (warning)
+        iconoContenedor.className = "text-warning mb-4";
+        icono.className = "fas fa-share-square";
+        titulo.textContent = "Derivar Audiencia";
+        texto.textContent = "Seleccione a quién asignar esta petición y deje un comentario o instrucciones.";
+        
+        // CAMBIADO EL BOTÓN A AMARILLO OSCURO (btn-warning text-dark)
+        btnAccion.className = "btn btn-warning text-dark btn-lg fw-bold px-5 shadow-sm";
+        btnAccion.innerHTML = '<i class="fas fa-paper-plane me-2"></i> Derivar Petición';
     }
 
     instanciaModal.show();
 }
 
 // ==========================================
-// 3. VALIDAR OBLIGATORIEDAD Y ENVIAR A BD
+// 4. VALIDAR OBLIGATORIEDAD Y ENVIAR A BD
 // ==========================================
 function validarYEnviar() {
     const comentarioInput = document.getElementById('modal-comentario');
     const errorDiv = document.getElementById('error-comentario');
-    
-    // .trim() evita que el usuario ponga espacios en blanco para saltarse la validación
     const comentarioVal = comentarioInput.value.trim();
+    
+    let usuarioDestinoVal = null;
+    let hayErrores = false;
 
+    // Validación del comentario
     if (comentarioVal === "") {
-        // Bloquear y mostrar los errores visuales
         comentarioInput.classList.add('is-invalid', 'border-danger');
         errorDiv.style.display = 'block';
-        comentarioInput.focus();
-        return; // SE DETIENE AQUÍ, NO SE ENVÍA NADA
+        hayErrores = true;
+    } else {
+        comentarioInput.classList.remove('is-invalid', 'border-danger');
+        errorDiv.style.display = 'none';
     }
 
-    // Si todo está bien, ocultamos error y preparamos envío
-    comentarioInput.classList.remove('is-invalid', 'border-danger');
-    errorDiv.style.display = 'none';
+    // Validación extra: Si es "Derivar", el Select también es obligatorio
+    if (estadoObjetivo === 'Derivar') {
+        const selectUsuario = document.getElementById('modal-select-usuario');
+        const errorSelect = document.getElementById('error-select');
+        usuarioDestinoVal = selectUsuario.value;
+
+        if (usuarioDestinoVal === "") {
+            selectUsuario.classList.add('is-invalid', 'border-danger');
+            errorSelect.style.display = 'block';
+            hayErrores = true;
+        } else {
+            selectUsuario.classList.remove('is-invalid', 'border-danger');
+            errorSelect.style.display = 'none';
+        }
+    }
+
+    if (hayErrores) return; // SE DETIENE AQUÍ SI FALTAN DATOS
     
     // Bloquear el botón mientras carga para evitar doble clic
     const btnAccion = document.getElementById('btnEjecutarAccion');
     btnAccion.disabled = true;
     btnAccion.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Procesando...';
 
-    ejecutarCambioEstado(comentarioVal);
+    ejecutarCambioEstado(comentarioVal, usuarioDestinoVal);
 }
 
 // ==========================================
-// 4. LLAMAR A LA API
+// 5. LLAMAR A LA API
 // ==========================================
-async function ejecutarCambioEstado(comentarioFinal) {
+async function ejecutarCambioEstado(comentarioFinal, usuarioDestinoFinal) {
     if (!idVisitaSeleccionada || !estadoObjetivo) return;
 
     try {
-        // La API espera el ID, el Estado y el Comentario obligatorio
-        const res = await apiAuditoria.cambiarEstado(idVisitaSeleccionada, estadoObjetivo, comentarioFinal);
+        let res;
+        
+        // Si la acción es derivar, llamamos al nuevo método de derivación
+        if (estadoObjetivo === 'Derivar') {
+            res = await apiAuditoria.derivarAuditoria(idVisitaSeleccionada, usuarioDestinoFinal, comentarioFinal);
+        } else {
+            // Acción normal (Completada o No Completada)
+            res = await apiAuditoria.cambiarEstado(idVisitaSeleccionada, estadoObjetivo, comentarioFinal);
+        }
         
         if (res.status === 1) {
             instanciaModal.hide();

@@ -130,6 +130,17 @@ const apiAuditoria = {
     
     // Leer todo para la Secretaria
     getGestionDiaria: async () => await ProcesarPeticion(`${apiAuditoria.baseUrl}?action=getGestionDiaria`, { method: 'GET' }),
+    // (AÑADIR ESTAS DOS FUNCIONES ADENTRO DE apiAuditoria)
+
+    // Obtener las derivaciones pendientes del usuario actual
+    getMisDerivaciones: async () => await ProcesarPeticion(`${apiAuditoria.baseUrl}?action=getMisDerivaciones`, { method: 'GET' }),
+    
+    // Marcar una derivación como resuelta/completada
+    resolverDerivacion: async (id, comentario) => await ProcesarPeticion(apiAuditoria.baseUrl, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'resolverDerivacion', id: id, comentario: comentario })
+    }),
     
     // Cambiar estado (Botones del Alcalde)
     cambiarEstado: async (id, nuevo_estado, comentario) => await ProcesarPeticion(apiAuditoria.baseUrl, {
@@ -157,6 +168,7 @@ const apiAuditoria = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'deleteAuditoria', id: id })
     })
+    
 };
 
 /* =========================================================================

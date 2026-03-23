@@ -24,6 +24,9 @@
         <a href="VistaListaAuditoria.php" class="nav-link-yb" data-roles="admin,alcalde">
             <i class="fas fa-list"></i> <span>Lista Auditorias</span>
         </a>
+        <a href="VistaDerivacion.php" class="nav-link-yb" data-roles="admin,alcalde">
+            <i class="fas fa-list"></i> <span>Lista Derivaciones</span>
+        </a>
     </div>
 
     <div class="sidebar-footer">
