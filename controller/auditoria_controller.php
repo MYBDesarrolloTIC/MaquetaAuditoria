@@ -90,21 +90,39 @@ switch ($action) {
         }
         break;
 
-    // --------------------------------------------------------------------
-    // VISTA DIRECTOR: LEER MIS DERIVACIONES ASIGNADAS
-    // --------------------------------------------------------------------
+    // --- LECTURA DE DERIVACIONES (ADMIN VE TODO, DIRECTOR VE LO SUYO) ---
     case 'getMisDerivaciones':
         try {
-            // Hacemos JOIN con la tabla intermedia filtrando por el ID del token actual
-            $sql = "SELECT a.id, a.fecha, a.hora, a.nombre_solicitante, a.rut_solicitante, a.motivo, d.comentario_alcalde as comentario_derivacion, e.nombre as estado 
-                    FROM auditoria a
-                    INNER JOIN estado_auditoria e ON a.id_estado = e.id
-                    INNER JOIN derivaciones d ON d.id_auditoria = a.id
-                    WHERE e.nombre = 'Derivada' AND d.id_director = ?
-                    ORDER BY a.fecha ASC, a.hora ASC";
-
-            $stmt = $con->prepare($sql);
-            $stmt->execute([$tokenData['id']]);
+            if ($tokenData['rol'] === 'admin') {
+                // El Admin ve absolutamente todas las derivaciones activas y a quién están asignadas
+                $sql = "SELECT a.id, a.fecha, a.hora, a.nombre_solicitante, a.rut_solicitante, a.motivo, 
+                               d.comentario_alcalde as comentario_derivacion, e.nombre as estado, 
+                               u.nombre as nombre_director
+                        FROM auditoria a
+                        INNER JOIN estado_auditoria e ON a.id_estado = e.id
+                        INNER JOIN derivaciones d ON d.id_auditoria = a.id
+                        INNER JOIN usuarios u ON d.id_director = u.id
+                        WHERE e.nombre = 'Derivada'
+                        ORDER BY a.fecha ASC, a.hora ASC";
+                
+                $stmt = $con->prepare($sql);
+                $stmt->execute();
+            } else {
+                // El Director solo ve las que tienen su propio ID
+                $sql = "SELECT a.id, a.fecha, a.hora, a.nombre_solicitante, a.rut_solicitante, a.motivo, 
+                               d.comentario_alcalde as comentario_derivacion, e.nombre as estado, 
+                               u.nombre as nombre_director
+                        FROM auditoria a
+                        INNER JOIN estado_auditoria e ON a.id_estado = e.id
+                        INNER JOIN derivaciones d ON d.id_auditoria = a.id
+                        INNER JOIN usuarios u ON d.id_director = u.id
+                        WHERE e.nombre = 'Derivada' AND d.id_director = ?
+                        ORDER BY a.fecha ASC, a.hora ASC";
+                
+                $stmt = $con->prepare($sql);
+                $stmt->execute([$tokenData['id']]);
+            }
+            
             echo json_encode(['status' => 1, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
         } catch (PDOException $e) {
             echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
