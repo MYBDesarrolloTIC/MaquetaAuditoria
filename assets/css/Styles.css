@@ -519,3 +519,9 @@ body, html {
         box-shadow: 4px 0 15px rgba(0,0,0,0.1);
     }
 }
+
+/* Animación para que la alerta entre desde la izquierda fluidamente */
+@keyframes slideInLeftToast { 
+    0% { transform: translateX(-100%) scale(0.9); opacity: 0; } 
+    100% { transform: translateX(0) scale(1); opacity: 1; } 
+}

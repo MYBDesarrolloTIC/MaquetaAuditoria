@@ -30,9 +30,6 @@
                         <i class="fas fa-check me-1"></i> Completada
                     </button>
                     <button class="btn btn-danger flex-fill fw-bold shadow-sm" onclick="abrirModalAccion('Incumplida', /* ID */)">
-                        <i class="fas fa-times me-1"></i> Derivar Peticiön
-                    </button>
-                    <button class="btn btn-danger flex-fill fw-bold shadow-sm" onclick="abrirModalAccion('Incumplida', /* ID */)">
                         <i class="fas fa-times me-1"></i> Denegada
                     </button>
                 </div>

@@ -41,10 +41,10 @@
                         <td>ASDAD...</td>
                         <td>
                             <div class="table-actions-container">
-                                <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="editar(...)">
+                                <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="editar">
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
-                                <button class="btn btn-danger btn-sm" onclick="eliminar(...)">
+                                <button class="btn btn-danger btn-sm" onclick="eliminar">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -76,9 +76,8 @@
         </div>
     </div>
 
-    <!-- MODAL CREAR -->
-    <div class="modal fade" id="modalCrear" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+   <div class="modal fade" id="modalCrear" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 950px;">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
                 <div class="modal-header border-0 py-4 px-5" style="background: linear-gradient(135deg, var(--yb-blue) 0%, #2a5298 100%);">
                     <h4 class="modal-title fw-bold text-white mb-0"><i class="fas fa-file-signature me-2 text-warning"></i> Registrar Nueva Solicitud</h4>
@@ -87,23 +86,49 @@
                 <div class="modal-body p-5 bg-light">
                     <form id="form-crear-solicitud">
                         <div class="row g-4">
-                            <div class="col-md-5">
-                                <div class="bg-white p-4 rounded-4 shadow-sm h-100 border-top border-3 border-primary">
+                            
+                            <div class="col-md-6">
+                                <div class="bg-white p-4 rounded-4 shadow-sm h-100 border-top border-3 border-primary d-flex flex-column">
                                     <h6 class="text-primary fw-bold mb-4"><i class="fas fa-user-circle me-2"></i>Datos del Solicitante</h6>
-                                    <div class="mb-3">
+                                    
+                                    <div class="mb-4">
                                         <label class="form-label text-muted small fw-bold">RUT DEL CIUDADANO</label>
                                         <input type="text" class="form-control form-control-lg bg-light" id="crear-rut" placeholder="Ej: 12.345.678-9" required>
                                     </div>
-                                    <div>
-                                        <label class="form-label text-muted small fw-bold">NOMBRE COMPLETO</label>
-                                        <input type="text" class="form-control form-control-lg bg-light" id="crear-nombre" placeholder="Nombre completo" required>
+                                    
+                                    <div class="mb-4">
+                                        <label class="form-label text-muted small fw-bold">NOMBRES</label>
+                                        <input type="text" class="form-control form-control-lg bg-light" id="crear-nombre" placeholder="Nombres" required>
+                                    </div>
+                                    
+                                    <div class="row g-3 mb-4">
+                                        <div class="col-6">
+                                            <label class="form-label text-muted small fw-bold">APELLIDO PATERNO</label>
+                                            <input type="text" class="form-control form-control-lg bg-light" id="crear-apellido-p" placeholder="Ej: Pérez" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label text-muted small fw-bold">APELLIDO MATERNO</label>
+                                            <input type="text" class="form-control form-control-lg bg-light" id="crear-apellido-m" placeholder="Ej: Silva" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label class="form-label text-muted small fw-bold">SECTOR</label>
+                                        <input type="text" class="form-control form-control-lg bg-light" id="crear-sector" placeholder="Ej: Centro" required>
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <label class="form-label text-muted small fw-bold">DIRECCIÓN</label>
+                                        <input type="text" class="form-control form-control-lg bg-light" id="crear-direccion" placeholder="Ej: Pasaje 1 #123" required>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-7">
-                                <div class="bg-white p-4 rounded-4 shadow-sm h-100 border-top border-3 border-warning">
+                            
+                            <div class="col-md-6">
+                                <div class="bg-white p-4 rounded-4 shadow-sm h-100 border-top border-3 border-warning d-flex flex-column">
                                     <h6 class="text-warning-dark fw-bold mb-4"><i class="fas fa-calendar-alt me-2"></i>Detalles de la Cita</h6>
-                                    <div class="row g-3 mb-3">
+                                    
+                                    <div class="row g-3 mb-4">
                                         <div class="col-sm-6">
                                             <label class="form-label text-muted small fw-bold">FECHA</label>
                                             <input type="date" class="form-control form-control-lg bg-light" id="crear-fecha" required>
@@ -113,12 +138,14 @@
                                             <input type="time" class="form-control form-control-lg bg-light" id="crear-hora" required>
                                         </div>
                                     </div>
-                                    <div>
+                                    
+                                    <div class="flex-grow-1 d-flex flex-column mb-2">
                                         <label class="form-label text-muted small fw-bold">MOTIVO / OBSERVACIONES</label>
-                                        <textarea class="form-control bg-light" id="crear-motivo" rows="4" placeholder="Describa el motivo..." required></textarea>
+                                        <textarea class="form-control bg-light flex-grow-1" id="crear-motivo" placeholder="Describa el motivo detalladamente..." style="resize: none;" required></textarea>
                                     </div>
                                 </div>
                             </div>
+                            
                         </div>
                     </form>
                 </div>
