@@ -1,11 +1,10 @@
 let datosGestion = [];
 let idSolicitudAEliminar = null;
-let timeoutBusqueda = null; // Para el autocompletado
+let timeoutBusqueda = null; 
 
 document.addEventListener("DOMContentLoaded", () => {
     cargarGestionDiaria();
 
-    // Activar buscador en vivo de la tabla
     const buscador = document.getElementById('buscador-solicitudes');
     if (buscador) {
         buscador.addEventListener('input', function () {
@@ -15,16 +14,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ==========================================
-    // AGREGAR EVENTOS DE FORMATEO A LOS RUT
-    // ==========================================
     const inputsRut = ['crear-rut', 'editar-rut'];
     inputsRut.forEach(id => {
         const inputElement = document.getElementById(id);
         if (inputElement) {
             inputElement.addEventListener('input', function (e) {
                 this.value = formatearRut(this.value);
-
                 if (this.value.length >= 8) {
                     if (validarRut(this.value)) {
                         this.classList.remove('is-invalid');
@@ -40,21 +35,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // ==========================================
-    // INICIALIZAR AUTOCOMPLETADO DE CIUDADANOS
-    // ==========================================
     configurarAutocompletado('crear-nombre');
     configurarAutocompletado('crear-rut');
 });
 
 // ==========================================
-// AUTOCOMPLETADO DE CIUDADANOS EN EL MODAL
+// AUTOCOMPLETADO DE CIUDADANOS
 // ==========================================
 function configurarAutocompletado(inputId) {
     const inputEl = document.getElementById(inputId);
     if (!inputEl) return;
 
-    // Crear el contenedor flotante (cascada)
     const dropdown = document.createElement('div');
     dropdown.className = 'dropdown-menu w-100 shadow-lg border-0';
     dropdown.style.maxHeight = '250px';
@@ -62,28 +53,23 @@ function configurarAutocompletado(inputId) {
     dropdown.style.position = 'absolute';
     dropdown.style.zIndex = '1050';
     
-    // Lo posicionamos justo debajo del input
     inputEl.parentElement.style.position = 'relative';
     inputEl.parentElement.appendChild(dropdown);
 
-    // Evento al escribir
     inputEl.addEventListener('input', function () {
         const termino = this.value.trim();
         clearTimeout(timeoutBusqueda);
 
-        // Ocultar si hay menos de 3 caracteres
         if (termino.length < 3) {
             dropdown.classList.remove('show');
             return;
         }
 
-        // Esperar 400ms antes de buscar para no saturar la base de datos
         timeoutBusqueda = setTimeout(async () => {
             dropdown.innerHTML = '<div class="px-3 py-2 text-muted small"><span class="spinner-border spinner-border-sm me-2"></span> Buscando similitudes...</div>';
             dropdown.classList.add('show');
 
             try {
-                // Llamar a la API
                 const res = await apiAuditoria.buscarCiudadano(termino);
                 dropdown.innerHTML = '';
 
@@ -96,13 +82,11 @@ function configurarAutocompletado(inputId) {
                         item.className = 'dropdown-item py-2 border-bottom';
                         item.style.cursor = 'pointer';
                         
-                        // Mostramos el Nombre y el RUT resaltado
                         item.innerHTML = `
                             <div class="fw-bold text-dark">${ciudadano.nombres} ${ciudadano.apellido_p} ${ciudadano.apellido_m || ''}</div>
                             <div class="small text-muted"><i class="fas fa-id-card text-warning"></i> RUT: ${rutFormateado}</div>
                         `;
 
-                        // Al hacer clic, rellenamos el formulario
                         item.addEventListener('click', () => {
                             autocompletarFormulario(ciudadano);
                             dropdown.classList.remove('show');
@@ -111,7 +95,7 @@ function configurarAutocompletado(inputId) {
                         dropdown.appendChild(item);
                     });
                 } else {
-                    dropdown.innerHTML = '<div class="px-3 py-2 text-muted small">No se encontraron ciudadanos con esos datos.</div>';
+                    dropdown.innerHTML = '<div class="px-3 py-2 text-muted small">No se encontraron ciudadanos.</div>';
                     setTimeout(() => dropdown.classList.remove('show'), 2000);
                 }
             } catch (error) {
@@ -120,7 +104,6 @@ function configurarAutocompletado(inputId) {
         }, 400);
     });
 
-    // Ocultar la cascada si se hace clic afuera
     document.addEventListener('click', function(e) {
         if (!inputEl.contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.classList.remove('show');
@@ -128,7 +111,6 @@ function configurarAutocompletado(inputId) {
     });
 }
 
-// Función para rellenar los campos automáticamente
 function autocompletarFormulario(data) {
     document.getElementById('crear-rut').value = formatearRut(data.rut_solicitante.toString());
     document.getElementById('crear-rut').classList.add('is-valid');
@@ -143,7 +125,6 @@ function autocompletarFormulario(data) {
     if (data.sector) document.getElementById('crear-sector').value = data.sector;
     if (data.direccion) document.getElementById('crear-direccion').value = data.direccion;
 
-    // Discapacidad
     const checkDiscapacidad = document.getElementById('crear-check-discapacidad');
     const wrapperDiscapacidad = document.getElementById('wrapper-discapacidad');
     const descDiscapacidad = document.getElementById('crear-desc-discapacidad');
@@ -157,15 +138,8 @@ function autocompletarFormulario(data) {
         wrapperDiscapacidad.classList.add('d-none');
         descDiscapacidad.value = "";
     }
-
-    if(typeof mostrarNotificacion === "function") {
-        mostrarNotificacion("Datos del ciudadano cargados automáticamente.", "success");
-    }
 }
 
-// ==========================================
-// FUNCIONES DE RUT (FORMATEO Y VALIDACIÓN)
-// ==========================================
 function formatearRut(rut) {
     let valor = rut.replace(/[^0-9kK]/g, '').toUpperCase();
     if (valor.length === 0) return '';
@@ -193,15 +167,15 @@ function validarRut(rutCompleto) {
 }
 
 // ==========================================
-// 1. CARGAR DATOS REALES DESDE LA BD
+// 1. CARGAR DATOS EN LAS TABLAS 
 // ==========================================
 async function cargarGestionDiaria() {
     const tbodyPendientes = document.querySelector('#tabla-pendientes tbody');
     const tbodyHistorial = document.querySelector('#tabla-historial-diario tbody');
     if (!tbodyPendientes || !tbodyHistorial) return;
 
-    tbodyPendientes.innerHTML = `<tr><td colspan="7" class="text-center">Cargando datos...</td></tr>`;
-    tbodyHistorial.innerHTML = `<tr><td colspan="6" class="text-center">Cargando datos...</td></tr>`;
+    tbodyPendientes.innerHTML = `<tr><td colspan="7" class="text-center py-4"><span class="spinner-border spinner-border-sm text-primary"></span> Cargando datos...</td></tr>`;
+    tbodyHistorial.innerHTML = `<tr><td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm text-primary"></span> Cargando datos...</td></tr>`;
 
     const res = await apiAuditoria.getGestionDiaria();
 
@@ -215,7 +189,11 @@ async function cargarGestionDiaria() {
 
         res.data.forEach((item, index) => {
             const rutFormateado = formatearRut(item.rut_solicitante.toString());
-            const nombreMostrar = item.nombres ? `${item.nombres} ${item.apellido_p} ${item.apellido_m}` : item.nombre_solicitante;
+            
+            const nombreMostrar = item.nombres ? `<div class="fw-bold text-dark">${item.nombres} ${item.apellido_p}</div><small class="text-muted">${item.apellido_m || ''}</small>` : `<div class="fw-bold">${item.nombre_solicitante}</div>`;
+            const sectorMostrar = item.sector ? `<strong>${item.sector}</strong><br><small class="text-muted">${item.direccion}</small>` : '<span class="text-muted small">No especificado</span>';
+            const contactoMostrar = item.celular ? `<i class="fas fa-phone text-success me-1"></i>${item.celular}` : '<span class="text-muted small">Sin número</span>';
+            const fechaHora = `<div class="fw-bold">${item.fecha}</div><span class="badge bg-light text-primary border"><i class="fas fa-clock"></i> ${item.hora.substring(0, 5)}</span>`;
 
             if (item.estado === 'Pendiente') {
                 hayPendientes = true;
@@ -223,9 +201,10 @@ async function cargarGestionDiaria() {
                   <tr class="fila-busqueda align-middle">
                         <td class="rut-col">${rutFormateado}</td>
                         <td class="nombre-col">${nombreMostrar}</td>
-                        <td>${item.fecha}</td>
-                        <td>${item.hora.substring(0, 5)}</td>
-                        <td>${item.motivo.substring(0, 40)}...</td>
+                        <td>${sectorMostrar}</td>
+                        <td>${contactoMostrar}</td>
+                        <td>${fechaHora}</td>
+                        <td>${item.motivo.substring(0, 35)}...</td>
                         <td class="text-center" style="width: 120px;">
                             <div class="d-grid gap-2">
                                 <button class="btn btn-sm btn-warning shadow-sm fw-bold text-dark" onclick="abrirModalEditar(${index})"><i class="fas fa-edit"></i> Editar</button>
@@ -239,12 +218,12 @@ async function cargarGestionDiaria() {
                 const rowClass = item.estado === 'Completada' ? 'bg-success-light' : 'bg-danger-yb-light';
                 const icon = item.estado === 'Completada' ? '✅' : '❌';
                 tbodyHistorial.innerHTML += `
-                    <tr class="${rowClass} fila-busqueda">
+                    <tr class="${rowClass} fila-busqueda align-middle">
                         <td class="ps-4 rut-col">${rutFormateado}</td>
                         <td class="nombre-col">${nombreMostrar}</td>
-                        <td>${item.fecha}</td>
-                        <td>${item.hora.substring(0, 5)}</td>
-                        <td>${item.motivo.substring(0, 40)}...</td>
+                        <td>${sectorMostrar}</td>
+                        <td>${fechaHora}</td>
+                        <td>${item.motivo.substring(0, 35)}...</td>
                         <td><span class="badge ${badgeClass} shadow-sm px-3 py-2">${icon} ${item.estado}</span></td>
                     </tr>`;
             }
@@ -259,14 +238,19 @@ async function cargarGestionDiaria() {
 }
 
 // ==========================================
-// 2. CREAR SOLICITUD
+// 2. CREAR SOLICITUD (CON REPORTE NATIVO HTML)
 // ==========================================
 async function guardarNuevaSolicitud() {
-    const rutIngresado = document.getElementById('crear-rut').value.trim();
+    // 1. ESTO HACE LA MAGIA: Obliga al HTML a mostrar el error rojo si te falta llenar un campo
+    const form = document.getElementById('form-crear-solicitud');
+    if (!form.checkValidity()) {
+        form.reportValidity(); 
+        return;
+    }
 
+    const rutIngresado = document.getElementById('crear-rut').value.trim();
     if (!validarRut(rutIngresado)) {
-        if(typeof mostrarNotificacion === "function") mostrarNotificacion("El RUT ingresado no es válido.", "warning");
-        else alert("El RUT ingresado no es válido.");
+        alert("El RUT ingresado no es válido. Revísalo por favor.");
         document.getElementById('crear-rut').focus();
         return;
     }
@@ -275,7 +259,7 @@ async function guardarNuevaSolicitud() {
     let descripcionDiscapacidad = tieneDiscapacidad ? document.getElementById('crear-desc-discapacidad').value.trim() : "Ninguna";
 
     if (tieneDiscapacidad && descripcionDiscapacidad === "") {
-        if(typeof mostrarNotificacion === "function") mostrarNotificacion("Especifique la discapacidad o desmarque la casilla.", "warning");
+        alert("Especifique la discapacidad o desmarque la casilla.");
         document.getElementById('crear-desc-discapacidad').focus();
         return;
     }
@@ -302,26 +286,22 @@ async function guardarNuevaSolicitud() {
         motivo: document.getElementById('crear-motivo').value.trim()
     };
 
-    if (!datos.nombres || !datos.apellido_p || !datos.fecha || !datos.hora || !datos.motivo) {
-        if(typeof mostrarNotificacion === "function") mostrarNotificacion("Por favor, completa todos los campos obligatorios.", "warning");
-        return;
-    }
-
     try {
         const res = await apiAuditoria.createAuditoria(datos);
         if (res && res.status === 1) {
-            bootstrap.Modal.getInstance(document.getElementById('modalCrear')).hide();
-            document.getElementById('form-crear-solicitud').reset();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCrear')).hide();
+            form.reset();
             document.getElementById('crear-rut').classList.remove('is-valid', 'is-invalid');
             document.getElementById('wrapper-discapacidad').classList.add('d-none');
             
-            if(typeof mostrarNotificacion === "function") mostrarNotificacion("Solicitud guardada correctamente.", "success");
+            alert("Solicitud Creada con Éxito"); // Respaldo nativo si no hay Toast
             cargarGestionDiaria();
         } else {
-            if(typeof mostrarNotificacion === "function") mostrarNotificacion("Error: " + (res.message || "Rechazo del servidor."), "error");
+            alert("Error del servidor: " + (res.message || "Rechazo"));
         }
     } catch (e) {
-        if(typeof mostrarNotificacion === "function") mostrarNotificacion("Error crítico de conexión.", "error");
+        alert("Error crítico de conexión.");
+        console.error(e);
     }
 }
 
@@ -368,10 +348,17 @@ function abrirModalEditar(index) {
 }
 
 async function guardarEdicion() {
-    const rutIngresado = document.getElementById('editar-rut').value.trim();
+    // Validar HTML5 nativo
+    const form = document.getElementById('form-editar-solicitud');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
 
+    const rutIngresado = document.getElementById('editar-rut').value.trim();
     if (!validarRut(rutIngresado)) {
-        if(typeof mostrarNotificacion === "function") mostrarNotificacion("El RUT corregido no es válido.", "warning");
+        alert("El RUT corregido no es válido.");
+        document.getElementById('editar-rut').focus();
         return;
     }
 
@@ -404,14 +391,14 @@ async function guardarEdicion() {
     try {
         const res = await apiAuditoria.updateAuditoria(datos);
         if (res && res.status === 1) {
-            bootstrap.Modal.getInstance(document.getElementById('modalEditar')).hide();
-            if(typeof mostrarNotificacion === "function") mostrarNotificacion("Solicitud actualizada correctamente.", "success");
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditar')).hide();
+            alert("Solicitud actualizada correctamente.");
             cargarGestionDiaria();
         } else {
-            if(typeof mostrarNotificacion === "function") mostrarNotificacion("Error: " + (res.message || "Rechazo del servidor."), "error");
+            alert("Error: " + (res.message || "Rechazo del servidor."));
         }
     } catch (e) {
-        if(typeof mostrarNotificacion === "function") mostrarNotificacion("Error crítico de conexión.", "error");
+        alert("Error crítico de conexión.");
     }
 }
 
@@ -427,12 +414,12 @@ async function ejecutarEliminar() {
     if (!idSolicitudAEliminar) return;
     const res = await apiAuditoria.deleteAuditoria(idSolicitudAEliminar);
     if (res.status === 1) {
-        bootstrap.Modal.getInstance(document.getElementById('modalEliminar')).hide();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEliminar')).hide();
         idSolicitudAEliminar = null;
-        if(typeof mostrarNotificacion === "function") mostrarNotificacion("Solicitud eliminada del sistema.", "success");
+        alert("Solicitud eliminada del sistema.");
         cargarGestionDiaria();
     } else {
-        if(typeof mostrarNotificacion === "function") mostrarNotificacion("Error: " + res.message, "error");
+        alert("Error: " + res.message);
     }
 }
 
