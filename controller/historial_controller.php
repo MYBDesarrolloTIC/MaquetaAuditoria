@@ -5,7 +5,7 @@ require_once 'JwtHandler.php';
 header('Content-Type: application/json');
 
 // ========================================================================
-// 1. MIDDLEWARE: VALIDACIÓN DE SEGURIDAD
+// 1. MIDDLEWARE DE SEGURIDAD
 // ========================================================================
 $headers = apache_request_headers();
 $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : '');
@@ -15,42 +15,50 @@ if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
     exit;
 }
 
-$token = $matches[1];
-$jwt = new JwtHandler();
-$tokenData = $jwt->validarToken($token);
+$tokenData = (new JwtHandler())->validarToken($matches[1]);
 
-// El historial es una vista general, permitimos a los 3 roles
-if (!$tokenData || !in_array($tokenData['rol'], ['admin', 'secretaria'])) {
-    echo json_encode(['status' => 0, 'message' => 'Acceso denegado. Permisos insuficientes.']);
+if (!$tokenData || !in_array($tokenData['rol'], ['admin', 'alcalde', 'secretaria'])) {
+    echo json_encode(['status' => 0, 'message' => 'Permisos insuficientes para ver el historial.']);
     exit;
 }
 
 // ========================================================================
-// 2. PROCESAMIENTO DEL HISTORIAL
+// 2. CONEXIÓN Y PROCESAMIENTO
 // ========================================================================
-$db = new Conexion();
-$con = $db->conectar();
-
+$con = (new Conexion())->conectar();
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-if ($action === 'getHistorialGeneral') {
-    try {
-        // Ahora consultamos directamente a la tabla historial
-        $sql = "SELECT h.id, h.fecha, h.hora, c.nombre as nombre_solicitante, c.rut as rut_solicitante, c.telefono, c.correo, h.motivo, h.resolucion, e.nombre as estado 
-                FROM historial h
-                INNER JOIN estado_auditoria e ON h.id_estado = e.id
-                INNER JOIN ciudadanos c ON h.id_ciudadano = c.id
-                ORDER BY h.fecha DESC, h.hora DESC";
-        
-        $stmt = $con->prepare($sql);
-        $stmt->execute();
-        $historial = $stmt->fetchAll();
-        
-        echo json_encode(['status' => 1, 'data' => $historial]);
-    } catch (PDOException $e) {
-        echo json_encode(['status' => 0, 'message' => 'Error al obtener el historial general.']);
-    }
-} else {
-    echo json_encode(['status' => 0, 'message' => 'Acción no reconocida.']);
+switch ($action) {
+
+    // --- LEER TODO EL HISTORIAL (Solo Admin, Secretaria y Alcalde) ---
+    case 'getHistorial':
+        try {
+            $sql = "SELECT h.id, h.fecha, h.hora, h.motivo, h.resolucion, 
+                           hd.comentario_alcalde as comentario_derivacion, 
+                           e.nombre as estado,
+                           c.rut as rut_solicitante, c.nombre as nombre_solicitante, 
+                           c.nombres, c.apellido_p, c.apellido_m, c.fecha_nacimiento, 
+                           c.telefono as celular, c.correo, c.sector, c.direccion, c.discapacidad,
+                           u_resp.nombre as responsable_resolucion,
+                           u_dir.nombre as director_asignado
+                    FROM historial h
+                    INNER JOIN estado_auditoria e ON h.id_estado = e.id
+                    INNER JOIN ciudadanos c ON h.id_ciudadano = c.id
+                    INNER JOIN usuarios u_resp ON h.id_usuario = u_resp.id
+                    LEFT JOIN historial_derivaciones hd ON hd.id_historial = h.id
+                    LEFT JOIN usuarios u_dir ON hd.id_director = u_dir.id 
+                    ORDER BY h.fecha DESC, h.hora DESC";
+            
+            $stmt = $con->prepare($sql);
+            $stmt->execute();
+
+            echo json_encode(['status' => 1, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
+        }
+        break;
+
+    default:
+        echo json_encode(['status' => 0, 'message' => 'Acción no reconocida.']);
+        break;
 }
-?>

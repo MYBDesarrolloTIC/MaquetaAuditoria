@@ -23,7 +23,7 @@ async function cargarHistorialGeneral() {
     tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted fw-bold">Cargando historial...</p></td></tr>`;
 
     try {
-        const res = await apiHistorial.getHistorialGeneral();
+        const res = await apiHistorial.getHistorial();
         tbody.innerHTML = '';
 
         if (res && res.status === 1 && res.data && res.data.length > 0) {
@@ -32,7 +32,7 @@ async function cargarHistorialGeneral() {
             res.data.forEach((item, index) => {
                 const rutFormateado = formatearRut(item.rut_solicitante.toString());
                 const nombreMostrar = item.nombres ? `${item.nombres} ${item.apellido_p} ${item.apellido_m || ''}` : item.nombre_solicitante;
-                
+
                 // Color dinámico para el estado
                 let badgeClass = 'bg-secondary';
                 if (item.estado === 'Completada') badgeClass = 'bg-success';
@@ -65,8 +65,9 @@ async function cargarHistorialGeneral() {
     }
 }
 
+
 // ==========================================
-// 2. VER DETALLES EN EL MODAL (AQUÍ ESTÁ LA MAGIA)
+// 2. VER DETALLES EN EL MODAL (CORREGIDO)
 // ==========================================
 function verDetalles(index) {
     const item = datosHistorial[index];
@@ -75,20 +76,27 @@ function verDetalles(index) {
     const rutFormateado = formatearRut(item.rut_solicitante.toString());
     const nombreMostrar = item.nombres ? `${item.nombres} ${item.apellido_p} ${item.apellido_m || ''}` : item.nombre_solicitante;
 
-    // A) CONSTRUIR SECCIÓN DE DERIVACIÓN CONDICIONALMENTE
+    // A) CONSTRUIR SECCIÓN DE DERIVACIÓN (Instrucciones del Alcalde)
     let htmlDerivacion = '';
-    // Si la propiedad existe en tu BD y tiene texto, creamos el bloque amarillo
-    if (item.comentario_derivacion && item.comentario_derivacion.trim() !== '') {
+    
+    // CORRECCIÓN 1: Evitamos el error .trim() convirtiendo los nulos a String de forma segura
+    const comentarioDeriv = item.comentario_derivacion ? String(item.comentario_derivacion).trim() : '';
+    
+    if (comentarioDeriv !== '') {
+        const nombreDirector = item.director_asignado ? `<span class="badge bg-warning text-dark mb-2 shadow-sm"><i class="fas fa-user-tie"></i> Asignado a: ${item.director_asignado}</span><br>` : '';
         htmlDerivacion = `
-            <div class="mt-4 p-3 rounded-3" style="background-color: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107;">
-                <h6 class="text-warning-dark fw-bold mb-2"><i class="fas fa-share me-2"></i>Instrucciones de Derivación</h6>
-                <p class="text-dark mb-0 small">${item.comentario_derivacion}</p>
+            <div class="mb-3">
+                <h6 class="text-warning-dark fw-bold mb-2"><i class="fas fa-share me-2"></i>Instrucciones del Alcalde</h6>
+                <div class="p-3 rounded-3" style="background-color: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107;">
+                    ${nombreDirector}
+                    <p class="text-dark mb-0 small">${comentarioDeriv}</p>
+                </div>
             </div>
         `;
     }
 
-    // B) CONSTRUIR SECCIÓN DE RESOLUCIÓN FINAL / MOTIVO DE DENEGACIÓN
-    let tituloResolucion = "Comentario / Resolución";
+    // B) CONSTRUIR SECCIÓN DE RESOLUCIÓN FINAL (Comentario del Director o Alcalde)
+    let tituloResolucion = "Resolución Final";
     let colorResolucion = "text-success";
     let borderResolucion = "#198754";
     let bgResolucion = "rgba(25, 135, 84, 0.1)";
@@ -101,20 +109,25 @@ function verDetalles(index) {
     }
 
     let htmlResolucion = '';
-    // Tu backend podría llamarlo 'comentario' o 'comentario_resolucion' dependiendo de cómo lo guardaste
-    const comentarioFinal = item.comentario_resolucion || item.comentario || '';
     
-    if (comentarioFinal.trim() !== '') {
+    // CORRECCIÓN 2: Tu backend envía esta variable como "resolucion" (No como comentario_resolucion)
+    const comentarioFinal = item.resolucion ? String(item.resolucion).trim() : '';
+    
+    if (comentarioFinal !== '') {
+         const responsable = item.responsable_resolucion ? `<span class="badge bg-secondary mb-2 shadow-sm"><i class="fas fa-check-circle"></i> Resuelto por: ${item.responsable_resolucion}</span><br>` : '';
          htmlResolucion = `
-            <div class="mt-3 p-3 rounded-3" style="background-color: ${bgResolucion}; border-left: 4px solid ${borderResolucion};">
+            <div class="mb-3">
                 <h6 class="${colorResolucion} fw-bold mb-2"><i class="fas fa-comment-dots me-2"></i>${tituloResolucion}</h6>
-                <p class="text-dark mb-0 small">${comentarioFinal}</p>
+                <div class="p-3 rounded-3" style="background-color: ${bgResolucion}; border-left: 4px solid ${borderResolucion};">
+                    ${responsable}
+                    <p class="text-dark mb-0 small">${comentarioFinal}</p>
+                </div>
             </div>
         `;
-    } else if (item.estado === 'Pendiente') {
+    } else if (item.estado === 'Pendiente' || item.estado === 'Derivada') {
         htmlResolucion = `
             <div class="mt-3 p-3 rounded-3 bg-light border-start border-4 border-secondary">
-                <p class="text-muted mb-0 small fst-italic"><i class="fas fa-hourglass-half me-1"></i> Aún no hay resolución, la petición está pendiente o en proceso.</p>
+                <p class="text-muted mb-0 small fst-italic"><i class="fas fa-hourglass-half me-1"></i> Aún no hay resolución, la petición está en proceso.</p>
             </div>
         `;
     }
@@ -124,25 +137,26 @@ function verDetalles(index) {
         <div class="text-center mb-4 mt-2">
             <h5 class="fw-bold text-dark mb-0">${nombreMostrar}</h5>
             <p class="text-muted small mb-0"><i class="fas fa-id-card me-1"></i> RUT: ${rutFormateado}</p>
+            <span class="badge bg-dark mt-2 px-3 py-2 shadow-sm">${item.estado}</span>
         </div>
         
-        <div class="row g-3 mb-3">
+        <div class="row g-3 mb-4">
             <div class="col-6">
-                <div class="p-2 bg-light rounded text-center shadow-sm">
+                <div class="p-2 bg-light rounded text-center shadow-sm border border-light">
                     <span class="d-block text-muted small fw-bold">FECHA</span>
                     <span class="text-dark fw-medium">${item.fecha}</span>
                 </div>
             </div>
             <div class="col-6">
-                <div class="p-2 bg-light rounded text-center shadow-sm">
+                <div class="p-2 bg-light rounded text-center shadow-sm border border-light">
                     <span class="d-block text-muted small fw-bold">HORA</span>
                     <span class="text-dark fw-medium">${item.hora.substring(0, 5)}</span>
                 </div>
             </div>
         </div>
 
-        <div class="mb-3">
-            <h6 class="text-primary fw-bold mb-2"><i class="fas fa-clipboard-list me-2"></i>Motivo Original</h6>
+        <div class="mb-4">
+            <h6 class="text-primary fw-bold mb-2"><i class="fas fa-clipboard-list me-2"></i>Motivo Original de la Solicitud</h6>
             <div class="p-3 bg-light rounded-3 border">
                 <p class="text-dark mb-0 small">${item.motivo}</p>
             </div>
@@ -156,6 +170,7 @@ function verDetalles(index) {
     const modalInstancia = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDetalle'));
     modalInstancia.show();
 }
+
 
 // ==========================================
 // FUNCIONES AUXILIARES

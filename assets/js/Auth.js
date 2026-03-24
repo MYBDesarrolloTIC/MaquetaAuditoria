@@ -65,6 +65,8 @@ function redirigirSegunRol(rol) {
         window.location.replace("VistaGestionAuditoria.php");
     } else if (rol === 'alcalde') {
         window.location.replace("VistaListaAuditoria.php");
+    } else if (rol === 'director') {
+        window.location.replace("VistaDerivacion.php"); // El director va a su bandeja
     } else {
         cerrarSesion();
     }

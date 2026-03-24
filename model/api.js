@@ -137,10 +137,14 @@ const apiAuditoria = {
     getMisDerivaciones: async () => await procesarPeticion(`${apiAuditoria.baseUrl}?action=getMisDerivaciones`, { method: 'GET' }),
     
     // Marcar una derivación como resuelta/completada
-    resolverDerivacion: async (id, comentario) => await procesarPeticion(apiAuditoria.baseUrl, {
+    resolverDerivacion: async (id, comentario) => await ProcesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'resolverDerivacion', id: id, comentario: comentario })
+        body: JSON.stringify({ 
+            action: 'resolverDerivacion', 
+            id: id, 
+            comentario: comentario 
+        })
     }),
     
     // Derivar (Ahora sí envía los 3 datos obligatorios a tu backend)
@@ -186,10 +190,10 @@ const apiAuditoria = {
 };
 
 /* =========================================================================
-   API: HISTORIAL GENERAL
+   API: HISTORIAL DE AUDITORÍAS (VISTA SECRETARIA Y ALCALDE)
    ========================================================================= */
 const apiHistorial = {
     baseUrl: '../controller/historial_controller.php',
 
-    getHistorialGeneral: async () => await procesarPeticion(`${apiHistorial.baseUrl}?action=getHistorialGeneral`, { method: 'GET' })
+    getHistorial: async () => await ProcesarPeticion(`${apiHistorial.baseUrl}?action=getHistorial`, { method: 'GET' })
 };
