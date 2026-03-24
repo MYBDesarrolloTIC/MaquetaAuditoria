@@ -23,16 +23,34 @@
                 <thead class="bg-light">
                     <tr>
                         <th>RUT</th>
-                        <th>Ciudadano</th>
-                        <th>Ubicación</th>
-                        <th>Contacto</th>
-                        <th>Fecha y Hora</th>
+                        <th>Nombre Completo</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
                         <th>Motivo</th>
                         <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    </tbody>
+                    <!-- EJEMPLO DE CÓMO TU JS DEBE GENERAR LA FILA PARA QUE LOS BOTONES SEAN IGUALES -->
+                    <!-- Nota la clase "table-actions-container" envolviendo los botones -->
+                    <tr>
+                        <td>21.665.534-6</td>
+                        <td>Ejemplo Ciudadano</td>
+                        <td>2023-10-25</td>
+                        <td>18:21</td>
+                        <td>ASDAD...</td>
+                        <td>
+                            <div class="table-actions-container">
+                                <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="editar">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -44,15 +62,16 @@
                 <thead class="bg-light">
                     <tr>
                         <th class="ps-4">RUT</th>
-                        <th>Ciudadano</th>
-                        <th>Ubicación</th>
-                        <th>Fecha y Hora</th>
+                        <th>Nombre Completo</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
                         <th>Motivo</th>
                         <th>Estado</th>
                     </tr>
                 </thead>
                 <tbody>
-                    </tbody>
+                    <!-- El JS genera esto -->
+                </tbody>
             </table>
         </div>
     </div>
@@ -169,8 +188,7 @@
             </div>
         </div>
     </div>
-
-    <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 1000px;">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
                 <div class="modal-header border-0 py-4 px-5 bg-warning">
@@ -285,6 +303,7 @@
         </div>
     </div>
 
+    <!-- MODAL ELIMINAR -->
     <div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
