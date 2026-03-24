@@ -147,13 +147,21 @@ switch ($action) {
     // --- GESTIÓN DIARIA (SECRETARIA) ---
     case 'getGestionDiaria':
         try {
-            $sql = "SELECT a.id, a.fecha, a.hora, c.nombre as nombre_solicitante, c.rut as rut_solicitante, a.motivo, NULL as resolucion, d.comentario_alcalde as comentario_derivacion, e.nombre as estado 
+            $sql = "SELECT a.id, a.fecha, a.hora, a.motivo, NULL as resolucion, 
+                           d.comentario_alcalde as comentario_derivacion, e.nombre as estado,
+                           c.rut as rut_solicitante, c.nombre as nombre_solicitante, 
+                           c.nombres, c.apellido_p, c.apellido_m, c.fecha_nacimiento, 
+                           c.telefono as celular, c.correo, c.sector, c.direccion, c.discapacidad
                     FROM auditoria a
                     INNER JOIN estado_auditoria e ON a.id_estado = e.id
                     INNER JOIN ciudadanos c ON a.id_ciudadano = c.id
                     LEFT JOIN derivaciones d ON d.id_auditoria = a.id
                     UNION ALL 
-                    SELECT h.id, h.fecha, h.hora, c.nombre as nombre_solicitante, c.rut as rut_solicitante, h.motivo, h.resolucion, hd.comentario_alcalde as comentario_derivacion, e.nombre as estado 
+                    SELECT h.id, h.fecha, h.hora, h.motivo, h.resolucion, 
+                           hd.comentario_alcalde as comentario_derivacion, e.nombre as estado,
+                           c.rut as rut_solicitante, c.nombre as nombre_solicitante, 
+                           c.nombres, c.apellido_p, c.apellido_m, c.fecha_nacimiento, 
+                           c.telefono as celular, c.correo, c.sector, c.direccion, c.discapacidad
                     FROM historial h
                     INNER JOIN estado_auditoria e ON h.id_estado = e.id
                     INNER JOIN ciudadanos c ON h.id_ciudadano = c.id
