@@ -5,51 +5,40 @@ require_once 'JwtHandler.php';
 header('Content-Type: application/json');
 
 // ========================================================================
-// 1. MIDDLEWARE: VALIDACIÓN DE SEGURIDAD (4 ROLES)
+// 1. MIDDLEWARE DE SEGURIDAD
 // ========================================================================
 $headers = apache_request_headers();
 $authHeader = isset($headers['Authorization']) ? $headers['Authorization'] : (isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : '');
 
 if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-    echo json_encode(['status' => 0, 'message' => 'Acceso denegado. Token no proporcionado.']);
+    echo json_encode(['status' => 0, 'message' => 'Acceso denegado.']);
     exit;
 }
 
-$token = $matches[1];
-$jwt = new JwtHandler();
-$tokenData = $jwt->validarToken($token);
-
+$tokenData = (new JwtHandler())->validarToken($matches[1]);
 if (!$tokenData || !in_array($tokenData['rol'], ['admin', 'alcalde', 'secretaria', 'director'])) {
-    echo json_encode(['status' => 0, 'message' => 'Acceso denegado. Permisos insuficientes.']);
+    echo json_encode(['status' => 0, 'message' => 'Permisos insuficientes.']);
     exit;
 }
 
 // ========================================================================
-// 2. CONFIGURACIÓN DE CONEXIÓN Y RECEPCIÓN DE DATOS
+// 2. CONEXIÓN Y ENRUTADOR
 // ========================================================================
-$db = new Conexion();
-$con = $db->conectar();
-
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$con = (new Conexion())->conectar();
 $json = file_get_contents('php://input');
 $datos = json_decode($json, true);
-if (isset($datos['action'])) { $action = $datos['action']; }
+$action = isset($_GET['action']) ? $_GET['action'] : (isset($datos['action']) ? $datos['action'] : '');
 
-// ========================================================================
-// 3. ENRUTADOR PRINCIPAL (SWITCH)
-// ========================================================================
 switch ($action) {
 
-    // --------------------------------------------------------------------
-    // VISTA ALCALDE: LEER BANDEJA PENDIENTE
-    // --------------------------------------------------------------------
+    // --- LEER PENDIENTES (ALCALDE) ---
     case 'getPendientes':
         try {
-            $sql = "SELECT a.id, a.fecha, a.hora, a.nombre_solicitante, a.rut_solicitante, a.motivo, e.nombre as estado 
+            $sql = "SELECT a.id, a.fecha, a.hora, c.nombre as nombre_solicitante, c.rut as rut_solicitante, c.telefono, c.correo, a.motivo, e.nombre as estado 
                     FROM auditoria a
                     INNER JOIN estado_auditoria e ON a.id_estado = e.id
-                    WHERE e.nombre = 'Pendiente'
-                    ORDER BY a.fecha ASC, a.hora ASC";
+                    INNER JOIN ciudadanos c ON a.id_ciudadano = c.id
+                    WHERE e.nombre = 'Pendiente' ORDER BY a.fecha ASC, a.hora ASC";
             $stmt = $con->prepare($sql);
             $stmt->execute();
             echo json_encode(['status' => 1, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
@@ -58,186 +47,118 @@ switch ($action) {
         }
         break;
 
-    // --------------------------------------------------------------------
-    // VISTA ALCALDE: DERIVAR A UN DIRECTOR (Usa tabla intermedia)
-    // --------------------------------------------------------------------
-    case 'derivarAuditoria':
-        if (!isset($datos['id']) || !isset($datos['usuario_destino']) || !isset($datos['comentario'])) {
-            echo json_encode(['status' => 0, 'message' => 'Faltan datos para derivar la solicitud.']);
-            exit;
-        }
-
-        try {
-            $con->beginTransaction(); // Iniciamos transacción para asegurar ambas inserciones
-
-            // 1. Cambiamos el estado en la tabla principal
-            $stmtEstado = $con->prepare("SELECT id FROM estado_auditoria WHERE nombre = 'Derivada'");
-            $stmtEstado->execute();
-            $id_estado = $stmtEstado->fetchColumn();
-
-            $sqlUpd = "UPDATE auditoria SET id_estado = ? WHERE id = ?";
-            $con->prepare($sqlUpd)->execute([$id_estado, $datos['id']]);
-
-            // 2. Insertamos en la tabla intermedia de derivaciones
-            $sqlDeriv = "INSERT INTO derivaciones (id_auditoria, id_director, comentario_alcalde) VALUES (?, ?, ?)";
-            $con->prepare($sqlDeriv)->execute([$datos['id'], $datos['usuario_destino'], trim($datos['comentario'])]);
-
-            $con->commit();
-            echo json_encode(['status' => 1, 'message' => 'Solicitud derivada correctamente al Director.']);
-        } catch (PDOException $e) {
-            $con->rollBack();
-            echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
-        }
-        break;
-
-    // --- LECTURA DE DERIVACIONES (ADMIN VE TODO, DIRECTOR VE LO SUYO) ---
+    // --- LEER MIS DERIVACIONES (DIRECTOR) ---
     case 'getMisDerivaciones':
         try {
-            if ($tokenData['rol'] === 'admin') {
-                // El Admin ve absolutamente todas las derivaciones activas y a quién están asignadas
-                $sql = "SELECT a.id, a.fecha, a.hora, a.nombre_solicitante, a.rut_solicitante, a.motivo, 
-                               d.comentario_alcalde as comentario_derivacion, e.nombre as estado, 
-                               u.nombre as nombre_director
-                        FROM auditoria a
-                        INNER JOIN estado_auditoria e ON a.id_estado = e.id
-                        INNER JOIN derivaciones d ON d.id_auditoria = a.id
-                        INNER JOIN usuarios u ON d.id_director = u.id
-                        WHERE e.nombre = 'Derivada'
-                        ORDER BY a.fecha ASC, a.hora ASC";
-                
-                $stmt = $con->prepare($sql);
-                $stmt->execute();
-            } else {
-                // El Director solo ve las que tienen su propio ID
-                $sql = "SELECT a.id, a.fecha, a.hora, a.nombre_solicitante, a.rut_solicitante, a.motivo, 
-                               d.comentario_alcalde as comentario_derivacion, e.nombre as estado, 
-                               u.nombre as nombre_director
-                        FROM auditoria a
-                        INNER JOIN estado_auditoria e ON a.id_estado = e.id
-                        INNER JOIN derivaciones d ON d.id_auditoria = a.id
-                        INNER JOIN usuarios u ON d.id_director = u.id
-                        WHERE e.nombre = 'Derivada' AND d.id_director = ?
-                        ORDER BY a.fecha ASC, a.hora ASC";
-                
-                $stmt = $con->prepare($sql);
-                $stmt->execute([$tokenData['id']]);
-            }
-            
+            $esAdmin = ($tokenData['rol'] === 'admin');
+            $sql = "SELECT a.id, a.fecha, a.hora, c.nombre as nombre_solicitante, c.rut as rut_solicitante, c.telefono, c.correo, a.motivo, 
+                           d.comentario_alcalde as comentario_derivacion, e.nombre as estado, u.nombre as nombre_director
+                    FROM auditoria a
+                    INNER JOIN estado_auditoria e ON a.id_estado = e.id
+                    INNER JOIN ciudadanos c ON a.id_ciudadano = c.id
+                    INNER JOIN derivaciones d ON d.id_auditoria = a.id
+                    INNER JOIN usuarios u ON d.id_director = u.id
+                    WHERE e.nombre = 'Derivada' " . (!$esAdmin ? "AND d.id_director = ?" : "") . " ORDER BY a.fecha ASC, a.hora ASC";
+
+            $stmt = $con->prepare($sql);
+            $esAdmin ? $stmt->execute() : $stmt->execute([$tokenData['id']]);
             echo json_encode(['status' => 1, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
         } catch (PDOException $e) {
             echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
         }
         break;
 
-    // --------------------------------------------------------------------
-    // VISTA DIRECTOR: COMPLETAR/RESOLVER SU DERIVACIÓN
-    // --------------------------------------------------------------------
-    case 'resolverDerivacion':
-        if (!isset($datos['id']) || !isset($datos['comentario']) || trim($datos['comentario']) === '') {
-            echo json_encode(['status' => 0, 'message' => 'El comentario de resolución es obligatorio.']);
+    // --- DERIVAR A UN DIRECTOR (ALCALDE) ---
+    case 'derivarAuditoria':
+        if (!isset($datos['id'], $datos['usuario_destino'], $datos['comentario'])) {
             exit;
         }
-
         try {
             $con->beginTransaction();
+            $id_estado = $con->query("SELECT id FROM estado_auditoria WHERE nombre = 'Derivada'")->fetchColumn();
+            $con->prepare("UPDATE auditoria SET id_estado = ? WHERE id = ?")->execute([$id_estado, $datos['id']]);
+            $con->prepare("INSERT INTO derivaciones (id_auditoria, id_director, comentario_alcalde) VALUES (?, ?, ?)")
+                ->execute([$datos['id'], $datos['usuario_destino'], trim($datos['comentario'])]);
+            $con->commit();
+            echo json_encode(['status' => 1, 'message' => 'Derivada correctamente.']);
+        } catch (PDOException $e) {
+            $con->rollBack();
+            echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
+        }
+        break;
 
-            $stmtEstado = $con->prepare("SELECT id FROM estado_auditoria WHERE nombre = 'Completada'");
-            $stmtEstado->execute();
-            $id_estado = $stmtEstado->fetchColumn();
+    // --- RESOLVER DERIVACIÓN (DIRECTOR) ---
+    case 'resolverDerivacion':
+        if (!isset($datos['id'], $datos['comentario'])) {
+            exit;
+        }
+        try {
+            $con->beginTransaction();
+            $id_estado = $con->query("SELECT id FROM estado_auditoria WHERE nombre = 'Completada'")->fetchColumn();
 
-            // Rescatamos datos de auditoria y de la derivación
-            $stmtAud = $con->prepare("SELECT * FROM auditoria WHERE id = ?");
-            $stmtAud->execute([$datos['id']]);
-            $auditoria = $stmtAud->fetch(PDO::FETCH_ASSOC);
+            $auditoria = $con->query("SELECT * FROM auditoria WHERE id = " . intval($datos['id']))->fetch(PDO::FETCH_ASSOC);
+            $derivacion = $con->query("SELECT * FROM derivaciones WHERE id_auditoria = " . intval($datos['id']))->fetch(PDO::FETCH_ASSOC);
 
-            $stmtDeriv = $con->prepare("SELECT * FROM derivaciones WHERE id_auditoria = ?");
-            $stmtDeriv->execute([$datos['id']]);
-            $derivacion = $stmtDeriv->fetch(PDO::FETCH_ASSOC);
-
-            // Insertamos al historial
-            $sqlHist = "INSERT INTO historial (fecha, hora, nombre_solicitante, rut_solicitante, motivo, resolucion, id_estado, id_usuario) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            $con->prepare($sqlHist)->execute([
-                $auditoria['fecha'], $auditoria['hora'], $auditoria['nombre_solicitante'], $auditoria['rut_solicitante'], 
-                $auditoria['motivo'], trim($datos['comentario']), $id_estado, $tokenData['id']
-            ]);
-            
-            // Recuperamos el ID que se acaba de crear en el historial
+            // Ahora guardamos el id_ciudadano en el historial
+            $con->prepare("INSERT INTO historial (fecha, hora, id_ciudadano, motivo, resolucion, id_estado, id_usuario) VALUES (?, ?, ?, ?, ?, ?, ?)")
+                ->execute([$auditoria['fecha'], $auditoria['hora'], $auditoria['id_ciudadano'], $auditoria['motivo'], trim($datos['comentario']), $id_estado, $tokenData['id']]);
             $id_historial = $con->lastInsertId();
 
-            // Insertamos la derivación en el historial_derivaciones
             if ($derivacion) {
-                $sqlHistDeriv = "INSERT INTO historial_derivaciones (id_historial, id_director, comentario_alcalde) VALUES (?, ?, ?)";
-                $con->prepare($sqlHistDeriv)->execute([$id_historial, $derivacion['id_director'], $derivacion['comentario_alcalde']]);
+                $con->prepare("INSERT INTO historial_derivaciones (id_historial, id_director, comentario_alcalde) VALUES (?, ?, ?)")
+                    ->execute([$id_historial, $derivacion['id_director'], $derivacion['comentario_alcalde']]);
             }
 
-            // Limpiamos las tablas activas
             $con->prepare("DELETE FROM derivaciones WHERE id_auditoria = ?")->execute([$datos['id']]);
             $con->prepare("DELETE FROM auditoria WHERE id = ?")->execute([$datos['id']]);
-
             $con->commit();
-            echo json_encode(['status' => 1, 'message' => 'Derivación resuelta y enviada al historial.']);
+            echo json_encode(['status' => 1, 'message' => 'Resuelta.']);
         } catch (PDOException $e) {
             $con->rollBack();
             echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
         }
         break;
 
-    // --------------------------------------------------------------------
-    // VISTA ALCALDE: COMPLETAR/DENEGAR DIRECTAMENTE
-    // --------------------------------------------------------------------
+    // --- CAMBIAR ESTADO NORMAL (ALCALDE) ---
     case 'cambiarEstado':
-        if (!isset($datos['id']) || !isset($datos['nuevo_estado']) || !isset($datos['comentario'])) {
-            echo json_encode(['status' => 0, 'message' => 'Faltan datos de resolución.']);
+        if (!isset($datos['id'], $datos['nuevo_estado'], $datos['comentario'])) {
             exit;
         }
-
         try {
             $con->beginTransaction();
+            $stmtE = $con->prepare("SELECT id FROM estado_auditoria WHERE nombre = ?");
+            $stmtE->execute([$datos['nuevo_estado']]);
+            $id_estado = $stmtE->fetchColumn();
 
-            $stmtEstado = $con->prepare("SELECT id FROM estado_auditoria WHERE nombre = ?");
-            $stmtEstado->execute([$datos['nuevo_estado']]);
-            $id_estado = $stmtEstado->fetchColumn();
+            $auditoria = $con->query("SELECT * FROM auditoria WHERE id = " . intval($datos['id']))->fetch(PDO::FETCH_ASSOC);
 
-            $stmtAud = $con->prepare("SELECT * FROM auditoria WHERE id = ?");
-            $stmtAud->execute([$datos['id']]);
-            $auditoria = $stmtAud->fetch(PDO::FETCH_ASSOC);
-
-            // Al historial directo (sin pasar por derivaciones)
-            $sqlHist = "INSERT INTO historial (fecha, hora, nombre_solicitante, rut_solicitante, motivo, resolucion, id_estado, id_usuario) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            $con->prepare($sqlHist)->execute([
-                $auditoria['fecha'], $auditoria['hora'], $auditoria['nombre_solicitante'], $auditoria['rut_solicitante'], 
-                $auditoria['motivo'], trim($datos['comentario']), $id_estado, $tokenData['id']
-            ]);
+            $con->prepare("INSERT INTO historial (fecha, hora, id_ciudadano, motivo, resolucion, id_estado, id_usuario) VALUES (?, ?, ?, ?, ?, ?, ?)")
+                ->execute([$auditoria['fecha'], $auditoria['hora'], $auditoria['id_ciudadano'], $auditoria['motivo'], trim($datos['comentario']), $id_estado, $tokenData['id']]);
 
             $con->prepare("DELETE FROM auditoria WHERE id = ?")->execute([$datos['id']]);
-
             $con->commit();
-            echo json_encode(['status' => 1, 'message' => 'Audiencia movida al historial.']);
+            echo json_encode(['status' => 1, 'message' => 'Movida al historial.']);
         } catch (PDOException $e) {
             $con->rollBack();
             echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
         }
         break;
 
-    // --------------------------------------------------------------------
-    // VISTA SECRETARIA: GESTIÓN DIARIA (UNION ALL DE TABLAS ACTIVAS E HISTORIAL)
-    // --------------------------------------------------------------------
+    // --- GESTIÓN DIARIA (SECRETARIA) ---
     case 'getGestionDiaria':
         try {
-            // Protegemos el UNION ALL asegurando que ambas consultas devuelven las mismas 9 columnas
-            $sql = "SELECT a.id, a.fecha, a.hora, a.nombre_solicitante, a.rut_solicitante, a.motivo, NULL as resolucion, d.comentario_alcalde as comentario_derivacion, e.nombre as estado 
+            $sql = "SELECT a.id, a.fecha, a.hora, c.nombre as nombre_solicitante, c.rut as rut_solicitante, a.motivo, NULL as resolucion, d.comentario_alcalde as comentario_derivacion, e.nombre as estado 
                     FROM auditoria a
                     INNER JOIN estado_auditoria e ON a.id_estado = e.id
+                    INNER JOIN ciudadanos c ON a.id_ciudadano = c.id
                     LEFT JOIN derivaciones d ON d.id_auditoria = a.id
                     UNION ALL 
-                    SELECT h.id, h.fecha, h.hora, h.nombre_solicitante, h.rut_solicitante, h.motivo, h.resolucion, hd.comentario_alcalde as comentario_derivacion, e.nombre as estado 
+                    SELECT h.id, h.fecha, h.hora, c.nombre as nombre_solicitante, c.rut as rut_solicitante, h.motivo, h.resolucion, hd.comentario_alcalde as comentario_derivacion, e.nombre as estado 
                     FROM historial h
                     INNER JOIN estado_auditoria e ON h.id_estado = e.id
+                    INNER JOIN ciudadanos c ON h.id_ciudadano = c.id
                     LEFT JOIN historial_derivaciones hd ON hd.id_historial = h.id
                     ORDER BY fecha DESC, hora DESC";
-
             $stmt = $con->prepare($sql);
             $stmt->execute();
             echo json_encode(['status' => 1, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
@@ -246,35 +167,129 @@ switch ($action) {
         }
         break;
 
-    // --------------------------------------------------------------------
-    // METODOS CRUD BÁSICOS (SECRETARIA Y ADMIN)
-    // --------------------------------------------------------------------
-    case 'createAuditoria':
-        if (!in_array($tokenData['rol'], ['admin', 'secretaria'])) { exit; }
+    case 'buscarCiudadano':
+        $termino = isset($_GET['termino']) ? $_GET['termino'] : '';
+        if (strlen($termino) < 3) {
+            echo json_encode(['status' => 1, 'data' => []]);
+            exit;
+        }
         try {
-            $stmtEstado = $con->prepare("SELECT id FROM estado_auditoria WHERE nombre = 'Pendiente'");
-            $stmtEstado->execute();
-            $sql = "INSERT INTO auditoria (fecha, hora, nombre_solicitante, rut_solicitante, motivo, id_estado, id_usuario) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            $con->prepare($sql)->execute([$datos['fecha'], $datos['hora'], $datos['nombre_solicitante'], $datos['rut_solicitante'], $datos['motivo'], $stmtEstado->fetchColumn(), $tokenData['id']]);
-            echo json_encode(['status' => 1, 'message' => 'Solicitud creada con éxito.']);
-        } catch (PDOException $e) { echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]); }
+            // Buscamos coincidencias por RUT o por Nombre
+            $sql = "SELECT * FROM ciudadanos WHERE rut LIKE ? OR nombre LIKE ? LIMIT 10";
+            $stmt = $con->prepare($sql);
+            $like = "%" . $termino . "%";
+            $stmt->execute([$like, $like]);
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Mapeamos los datos para que el frontend los entienda como los programó
+            $ciudadanos = array_map(function ($c) {
+                return [
+                    'rut_solicitante' => $c['rut'],
+                    'nombre_solicitante' => $c['nombre'],
+                    'nombres' => $c['nombre'], // Para compatibilidad con el JS
+                    'celular' => $c['telefono'],
+                    'correo' => $c['correo']
+                ];
+            }, $resultados);
+
+            echo json_encode(['status' => 1, 'data' => $ciudadanos]);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
+        }
         break;
 
+    // --- CREAR Y EDITAR AUDITORÍA (CON GESTIÓN COMPLETA DE CIUDADANO) ---
+    case 'createAuditoria':
     case 'updateAuditoria':
-        if (!in_array($tokenData['rol'], ['admin', 'secretaria'])) { exit; }
+        if (!in_array($tokenData['rol'], ['admin', 'secretaria'])) {
+            exit;
+        }
         try {
-            $sql = "UPDATE auditoria SET fecha = ?, hora = ?, nombre_solicitante = ?, rut_solicitante = ?, motivo = ? WHERE id = ?";
-            $con->prepare($sql)->execute([$datos['fecha'], $datos['hora'], $datos['nombre_solicitante'], $datos['rut_solicitante'], $datos['motivo'], $datos['id']]);
-            echo json_encode(['status' => 1, 'message' => 'Solicitud actualizada correctamente.']);
-        } catch (PDOException $e) { echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]); }
+            // 1. Atrapamos EXACTAMENTE las variables que envía el Frontend
+            $rut = trim($datos['rut_solicitante']);
+            $nombre_completo = trim($datos['nombre_solicitante']);
+            $nombres = isset($datos['nombres']) ? trim($datos['nombres']) : null;
+            $apellido_p = isset($datos['apellido_p']) ? trim($datos['apellido_p']) : null;
+            $apellido_m = isset($datos['apellido_m']) ? trim($datos['apellido_m']) : null;
+            $fecha_nacimiento = isset($datos['fecha_nacimiento']) && $datos['fecha_nacimiento'] !== '' ? $datos['fecha_nacimiento'] : null;
+            $celular = isset($datos['celular']) ? trim($datos['celular']) : null;
+            $correo = isset($datos['correo']) ? trim($datos['correo']) : null;
+            $sector = isset($datos['sector']) ? trim($datos['sector']) : null;
+            $direccion = isset($datos['direccion']) ? trim($datos['direccion']) : null;
+            $discapacidad = isset($datos['discapacidad']) && trim($datos['discapacidad']) !== '' ? trim($datos['discapacidad']) : 'Ninguna';
+
+            // 2. Comprobar si el ciudadano ya existe en la BD
+            $stmtC = $con->prepare("SELECT id FROM ciudadanos WHERE rut = ?");
+            $stmtC->execute([$rut]);
+            $id_ciudadano = $stmtC->fetchColumn();
+
+            if ($id_ciudadano) {
+                // Si existe, actualizamos TODOS sus datos por si la secretaria corrigió algo (dirección, celular, etc)
+                $sqlUpd = "UPDATE ciudadanos SET 
+                            nombre = ?, nombres = ?, apellido_p = ?, apellido_m = ?, 
+                            telefono = ?, correo = ?, fecha_nacimiento = ?, 
+                            sector = ?, direccion = ?, discapacidad = ? 
+                           WHERE id = ?";
+                $con->prepare($sqlUpd)->execute([
+                    $nombre_completo,
+                    $nombres,
+                    $apellido_p,
+                    $apellido_m,
+                    $celular,
+                    $correo,
+                    $fecha_nacimiento,
+                    $sector,
+                    $direccion,
+                    $discapacidad,
+                    $id_ciudadano
+                ]);
+            } else {
+                // Si es nuevo, lo insertamos con toda su ficha técnica
+                $sqlIns = "INSERT INTO ciudadanos 
+                           (rut, nombre, nombres, apellido_p, apellido_m, telefono, correo, fecha_nacimiento, sector, direccion, discapacidad) 
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $con->prepare($sqlIns)->execute([
+                    $rut,
+                    $nombre_completo,
+                    $nombres,
+                    $apellido_p,
+                    $apellido_m,
+                    $celular,
+                    $correo,
+                    $fecha_nacimiento,
+                    $sector,
+                    $direccion,
+                    $discapacidad
+                ]);
+                $id_ciudadano = $con->lastInsertId();
+            }
+
+            // 3. Finalmente, guardamos la auditoría apuntando al ID del ciudadano
+            if ($action === 'createAuditoria') {
+                $id_estado = $con->query("SELECT id FROM estado_auditoria WHERE nombre = 'Pendiente'")->fetchColumn();
+                $con->prepare("INSERT INTO auditoria (fecha, hora, id_ciudadano, motivo, id_estado, id_usuario) VALUES (?, ?, ?, ?, ?, ?)")
+                    ->execute([$datos['fecha'], $datos['hora'], $id_ciudadano, $datos['motivo'], $id_estado, $tokenData['id']]);
+                echo json_encode(['status' => 1, 'message' => 'Solicitud creada con éxito.']);
+            } else {
+                $con->prepare("UPDATE auditoria SET fecha = ?, hora = ?, id_ciudadano = ?, motivo = ? WHERE id = ?")
+                    ->execute([$datos['fecha'], $datos['hora'], $id_ciudadano, $datos['motivo'], $datos['id']]);
+                echo json_encode(['status' => 1, 'message' => 'Solicitud actualizada.']);
+            }
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
+        }
         break;
 
     case 'deleteAuditoria':
-        if (!in_array($tokenData['rol'], ['admin', 'secretaria'])) { exit; }
+        if (!in_array($tokenData['rol'], ['admin', 'secretaria'])) {
+            exit;
+        }
         try {
             $con->prepare("DELETE FROM auditoria WHERE id = ?")->execute([$datos['id']]);
             echo json_encode(['status' => 1, 'message' => 'Solicitud eliminada.']);
-        } catch (PDOException $e) { echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]); }
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
+        }
         break;
 
     default:

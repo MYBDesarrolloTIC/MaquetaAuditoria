@@ -36,10 +36,11 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 if ($action === 'getHistorialGeneral') {
     try {
         // Ahora consultamos directamente a la tabla historial
-        $sql = "SELECT h.id, h.fecha, h.hora, h.nombre_solicitante, h.rut_solicitante, h.motivo, h.resolucion, e.nombre as estado 
+        $sql = "SELECT h.id, h.fecha, h.hora, c.nombre as nombre_solicitante, c.rut as rut_solicitante, c.telefono, c.correo, h.motivo, h.resolucion, e.nombre as estado 
                 FROM historial h
                 INNER JOIN estado_auditoria e ON h.id_estado = e.id
-                ORDER BY h.fecha DESC, h.hora DESC"; 
+                INNER JOIN ciudadanos c ON h.id_ciudadano = c.id
+                ORDER BY h.fecha DESC, h.hora DESC";
         
         $stmt = $con->prepare($sql);
         $stmt->execute();
