@@ -34,11 +34,20 @@ switch ($action) {
     // --- LEER PENDIENTES (ALCALDE) ---
     case 'getPendientes':
         try {
-            $sql = "SELECT a.id, a.fecha, a.hora, c.nombre as nombre_solicitante, c.rut as rut_solicitante, c.telefono, c.correo, a.motivo, e.nombre as estado 
+            $sql = "SELECT a.id, a.fecha, a.hora, c.nombre as nombre_solicitante, 
+                           c.rut as rut_solicitante, c.telefono, c.correo, c.discapacidad, 
+                           a.motivo, e.nombre as estado 
                     FROM auditoria a
                     INNER JOIN estado_auditoria e ON a.id_estado = e.id
                     INNER JOIN ciudadanos c ON a.id_ciudadano = c.id
-                    WHERE e.nombre = 'Pendiente' ORDER BY a.fecha ASC, a.hora ASC";
+                    WHERE e.nombre = 'Pendiente' 
+                    ORDER BY 
+                        CASE 
+                            WHEN c.discapacidad IS NOT NULL AND c.discapacidad != 'Ninguna' THEN 0 
+                            ELSE 1 
+                        END ASC, 
+                        a.fecha ASC, 
+                        a.hora ASC";
             $stmt = $con->prepare($sql);
             $stmt->execute();
             echo json_encode(['status' => 1, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
