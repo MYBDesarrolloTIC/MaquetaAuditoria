@@ -127,6 +127,72 @@ switch ($action) {
             echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
         }
         break;
+        
+        case 'denegarDerivacion':
+        if (!isset($datos['id'])) {
+            echo json_encode([
+                'status' => 0,
+                'message' => 'ID no recibido'
+            ]);
+            exit;
+        }
+
+        try {
+            $con->beginTransaction();
+
+            $id_estado = $con->query("SELECT id FROM estado_auditoria WHERE nombre = 'Denegada'")->fetchColumn();
+
+            $auditoria = $con->query("SELECT * FROM auditoria WHERE id = " . intval($datos['id']))->fetch(PDO::FETCH_ASSOC);
+            $derivacion = $con->query("SELECT * FROM derivaciones WHERE id_auditoria = " . intval($datos['id']))->fetch(PDO::FETCH_ASSOC);
+
+            if (!$auditoria) {
+                $con->rollBack();
+                echo json_encode([
+                    'status' => 0,
+                    'message' => 'No se encontró la auditoría'
+                ]);
+                exit;
+            }
+
+            $con->prepare("INSERT INTO historial (fecha, hora, id_ciudadano, motivo, resolucion, id_estado, id_usuario) VALUES (?, ?, ?, ?, ?, ?, ?)")
+                ->execute([
+                    $auditoria['fecha'],
+                    $auditoria['hora'],
+                    $auditoria['id_ciudadano'],
+                    $auditoria['motivo'],
+                    'Derivación denegada',
+                    $id_estado,
+                    $tokenData['id']
+                ]);
+
+            $id_historial = $con->lastInsertId();
+
+            if ($derivacion) {
+                $con->prepare("INSERT INTO historial_derivaciones (id_historial, id_director, comentario_alcalde) VALUES (?, ?, ?)")
+                    ->execute([
+                        $id_historial,
+                        $derivacion['id_director'],
+                        $derivacion['comentario_alcalde']
+                    ]);
+            }
+
+            $con->prepare("DELETE FROM derivaciones WHERE id_auditoria = ?")->execute([$datos['id']]);
+            $con->prepare("DELETE FROM auditoria WHERE id = ?")->execute([$datos['id']]);
+
+            $con->commit();
+
+            echo json_encode([
+                'status' => 1,
+                'message' => 'Derivación denegada correctamente'
+            ]);
+        } catch (PDOException $e) {
+            $con->rollBack();
+            echo json_encode([
+                'status' => 0,
+                'message' => 'Error SQL: ' . $e->getMessage()
+            ]);
+        }
+        exit;
 
     // --- CAMBIAR ESTADO NORMAL (ALCALDE) ---
     case 'cambiarEstado':

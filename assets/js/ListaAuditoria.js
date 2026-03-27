@@ -6,7 +6,7 @@ let listaUsuariosGlobal = []; // Para almacenar los usuarios a derivar
 
 document.addEventListener("DOMContentLoaded", () => {
     cargarVisitasPendientes();
-    cargarUsuariosParaDerivar(); // (Si aplica según tu versión anterior)
+    cargarUsuariosParaDerivar();
 
     const modalEl = document.getElementById('modalConfirmarAccion');
     if(modalEl){
@@ -18,17 +18,15 @@ document.addEventListener("DOMContentLoaded", () => {
         btnEjecutar.addEventListener('click', validarYEnviar);
     }
 
-    // === NUEVO: CÓDIGO DEL BUSCADOR ===
+    // Buscador en vivo
     const buscador = document.getElementById('buscador-visitas');
     if (buscador) {
         buscador.addEventListener('input', function () {
             const termino = this.value.toLowerCase().trim();
-            // Seleccionar todas las columnas (tarjetas) dentro del contenedor
             const tarjetas = document.querySelectorAll('#contenedor-visitas > div.col-md-6');
             
             tarjetas.forEach(tarjeta => {
                 const textoTarjeta = tarjeta.textContent.toLowerCase();
-                // Si el texto de la tarjeta incluye lo que escribimos, la mostramos, sino la ocultamos
                 if (textoTarjeta.includes(termino)) {
                     tarjeta.style.display = '';
                 } else {
@@ -44,18 +42,17 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 async function cargarUsuariosParaDerivar() {
     try {
-        // Usamos la API existente de usuarios para traer la lista
         const res = await apiUsuarios.getUsuarios();
         if (res && res.status === 1 && res.data) {
-            // Guardamos solo los usuarios activos
             listaUsuariosGlobal = res.data.filter(u => u.estado === 'Activo' || u.estado === 1);
         }
     } catch (error) {
         console.error("Error al cargar la lista de usuarios para derivación:", error);
     }
 }
+
 // ==========================================
-// 2. CARGAR VISITAS PENDIENTES
+// 2. CARGAR VISITAS PENDIENTES (CON PRIORIDAD Y TURNO)
 // ==========================================
 async function cargarVisitasPendientes() {
     const contenedor = document.getElementById('contenedor-visitas');
@@ -72,15 +69,51 @@ async function cargarVisitasPendientes() {
         contenedor.innerHTML = '';
 
         if (res && res.status === 1 && res.data && res.data.length > 0) {
-            res.data.forEach(item => {
+            
+            // 1. ALGORITMO DE PRIORIZACIÓN
+            // Ordena el array poniendo a los que tienen discapacidad al principio
+            res.data.sort((a, b) => {
+                let descA = a.discapacidad ? a.discapacidad.toLowerCase().trim() : 'ninguna';
+                let descB = b.discapacidad ? b.discapacidad.toLowerCase().trim() : 'ninguna';
+                
+                let esDiscA = (descA !== 'ninguna' && descA !== '') ? 1 : 0;
+                let esDiscB = (descB !== 'ninguna' && descB !== '') ? 1 : 0;
+                
+                return esDiscB - esDiscA; 
+            });
+
+            // 2. RENDERIZAR TARJETAS
+            res.data.forEach((item, index) => {
+                // Verificar si tiene discapacidad para mostrar la alerta visual
+                let textoDiscapacidad = item.discapacidad ? item.discapacidad.trim() : 'Ninguna';
+                let esDiscapacitado = (textoDiscapacidad.toLowerCase() !== 'ninguna' && textoDiscapacidad !== '');
+                
+                // HTML condicional del badge de prioridad
+                let badgePrioridad = esDiscapacitado 
+                    ? `<div class="mb-2"><span class="badge bg-danger shadow-sm py-2 px-3 fw-bold" style="font-size: 0.9rem;"><i class="fas fa-wheelchair me-1"></i> PRIORIDAD: ${textoDiscapacidad.toUpperCase()}</span></div>` 
+                    : '';
+
+                // Borde especial si es discapacitado
+                let bordeTarjeta = esDiscapacitado ? 'border-left: 5px solid var(--yb-red) !important;' : 'border-left: 5px solid var(--yb-blue) !important;';
+
+                // AQUÍ CREAMOS EL NÚMERO DE TURNO (Posición en la lista)
+                let numeroTurno = index + 1;
+
                 contenedor.innerHTML += `
                 <div class="col-md-6 col-lg-4 mb-4" id="tarjeta-visita-${item.id}">
-                    <div class="card text-center shadow-sm border-0 h-100 py-3" style="border-left: 5px solid var(--yb-blue) !important;">
+                    <div class="card text-center shadow-sm border-0 h-100 py-3 position-relative" style="${bordeTarjeta}">
+                        
+                        <div class="position-absolute top-0 end-0 m-3 d-flex align-items-center justify-content-center shadow-sm fw-bold" 
+                             style="width: 35px; height: 35px; border-radius: 50%; background-color: #ffc107; color: #000; font-size: 1.1rem; z-index: 1;">
+                            ${numeroTurno}
+                        </div>
+
                         <div class="card-body">
-                            <h5 class="card-title fw-bold text-black">${item.nombre_solicitante}</h5>
+                            ${badgePrioridad}
+                            <h5 class="card-title fw-bold text-black mt-2">${item.nombre_solicitante}</h5>
                             <h6 class="card-subtitle mb-3 text-muted">
                                 <i class="fas fa-id-card me-1"></i> RUT: ${item.rut_solicitante} <br> 
-                                <i class="fas fa-clock me-1 text-warning"></i> Hora: ${item.hora.substring(0, 5)}
+                                <i class="fas fa-clock me-1 text-warning"></i> Hora de Cita: ${item.hora.substring(0, 5)}
                             </h6>
                             <p class="card-text bg-light p-3 rounded text-start small">
                                 <strong class="text-primary"><i class="fas fa-comment-dots me-1"></i> Motivo original:</strong><br>
@@ -116,6 +149,7 @@ async function cargarVisitasPendientes() {
         contenedor.innerHTML = `<div class="col-12"><div class="alert alert-danger text-center">Error al conectar con el servidor.</div></div>`;
     }
 }
+
 // ==========================================
 // 3. PREPARAR EL MODAL Y REINICIAR VALORES
 // ==========================================
@@ -150,7 +184,6 @@ function prepararAccion(id, nuevoEstado) {
                 <i class="fas fa-exclamation-circle"></i> Debes seleccionar a quién derivar esta petición.
             </div>
         `;
-        // Lo insertamos justo antes del campo de comentario
         const contenedorComentario = comentarioInput.parentElement;
         contenedorComentario.parentElement.insertBefore(selectContenedor, contenedorComentario);
     }
@@ -159,11 +192,10 @@ function prepararAccion(id, nuevoEstado) {
     const errorSelect = document.getElementById('error-select');
     selectUsuario.classList.remove('is-invalid', 'border-danger');
     errorSelect.style.display = 'none';
-    selectUsuario.value = ""; // Limpiarlo
+    selectUsuario.value = ""; 
 
-    // Cambiar la interfaz del Modal dependiendo del botón presionado
     if (nuevoEstado === 'Completada') {
-        selectContenedor.style.display = 'none'; // Ocultar dropdown
+        selectContenedor.style.display = 'none'; 
         iconoContenedor.className = "text-success mb-4";
         icono.className = "fas fa-check-circle";
         titulo.textContent = "Audiencia Completada";
@@ -173,7 +205,7 @@ function prepararAccion(id, nuevoEstado) {
         btnAccion.innerHTML = '<i class="fas fa-check me-2"></i> Guardar Resolución';
 
     } else if (nuevoEstado === 'No Completada') {
-        selectContenedor.style.display = 'none'; // Ocultar dropdown
+        selectContenedor.style.display = 'none'; 
         iconoContenedor.className = "text-danger mb-4";
         icono.className = "fas fa-exclamation-triangle";
         titulo.textContent = "Audiencia Incumplida / Denegada";
@@ -183,21 +215,18 @@ function prepararAccion(id, nuevoEstado) {
         btnAccion.innerHTML = '<i class="fas fa-times me-2"></i> Guardar Motivo';
 
     } else if (nuevoEstado === 'Derivar') {
-        selectContenedor.style.display = 'block'; // Mostrar dropdown
+        selectContenedor.style.display = 'block'; 
         
-        // Llenar el select con los usuarios cargados
         selectUsuario.innerHTML = '<option value="">Seleccione un usuario...</option>';
         listaUsuariosGlobal.forEach(u => {
             selectUsuario.innerHTML += `<option value="${u.id}">${u.nombre} (${u.rol})</option>`;
         });
 
-        // CAMBIADO A AZUL (primary)
         iconoContenedor.className = "text-primary mb-4";
         icono.className = "fas fa-share-square";
         titulo.textContent = "Derivar Audiencia";
         texto.textContent = "Seleccione a quién asignar esta petición y deje un comentario o instrucciones.";
         
-        // CAMBIADO EL BOTÓN A AZUL (btn-primary text-white)
         btnAccion.className = "btn btn-primary text-white btn-lg fw-bold px-5 shadow-sm";
         btnAccion.innerHTML = '<i class="fas fa-paper-plane me-2"></i> Derivar Petición';
     }
@@ -216,7 +245,6 @@ function validarYEnviar() {
     let usuarioDestinoVal = null;
     let hayErrores = false;
 
-    // Validación del comentario
     if (comentarioVal === "") {
         comentarioInput.classList.add('is-invalid', 'border-danger');
         errorDiv.style.display = 'block';
@@ -226,7 +254,6 @@ function validarYEnviar() {
         errorDiv.style.display = 'none';
     }
 
-    // Validación extra: Si es "Derivar", el Select también es obligatorio
     if (estadoObjetivo === 'Derivar') {
         const selectUsuario = document.getElementById('modal-select-usuario');
         const errorSelect = document.getElementById('error-select');
@@ -242,9 +269,8 @@ function validarYEnviar() {
         }
     }
 
-    if (hayErrores) return; // SE DETIENE AQUÍ SI FALTAN DATOS
+    if (hayErrores) return; 
     
-    // Bloquear el botón mientras carga para evitar doble clic
     const btnAccion = document.getElementById('btnEjecutarAccion');
     btnAccion.disabled = true;
     btnAccion.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Procesando...';
@@ -261,23 +287,21 @@ async function ejecutarCambioEstado(comentarioFinal, usuarioDestinoFinal) {
     try {
         let res;
         
-        // Si la acción es derivar, llamamos al nuevo método de derivación
         if (estadoObjetivo === 'Derivar') {
             res = await apiAuditoria.derivarAuditoria(idVisitaSeleccionada, usuarioDestinoFinal, comentarioFinal);
         } else {
-            // Acción normal (Completada o No Completada)
             res = await apiAuditoria.cambiarEstado(idVisitaSeleccionada, estadoObjetivo, comentarioFinal);
         }
         
         if (res.status === 1) {
             instanciaModal.hide();
 
-            // Animación de salida de la tarjeta que ya se completó
             const tarjeta = document.getElementById(`tarjeta-visita-${idVisitaSeleccionada}`);
             if (tarjeta) {
                 tarjeta.style.transition = "all 0.4s ease";
                 tarjeta.style.opacity = "0";
                 tarjeta.style.transform = "scale(0.8)";
+                // Al volver a cargar, se renderizan las tarjetas restantes y el contador se actualiza solo
                 setTimeout(() => cargarVisitasPendientes(), 400);
             } else {
                 cargarVisitasPendientes();
@@ -288,11 +312,43 @@ async function ejecutarCambioEstado(comentarioFinal, usuarioDestinoFinal) {
     } catch (error) {
         alert("Ocurrió un error crítico de conexión al procesar la solicitud.");
     } finally {
-        // Restaurar el botón para futuras operaciones
         const btnAccion = document.getElementById('btnEjecutarAccion');
         if(btnAccion) btnAccion.disabled = false;
         
         idVisitaSeleccionada = null;
         estadoObjetivo = null;
     }
+}
+
+// ==========================================
+// FUNCIONES AUXILIARES
+// ==========================================
+function formatearRut(rut) {
+    if (!rut) return '';
+    let valor = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+    if (valor.length === 0) return '';
+    let cuerpo = valor.slice(0, -1);
+    let dv = valor.slice(-1);
+    cuerpo = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return valor.length > 1 ? `${cuerpo}-${dv}` : valor;
+}
+
+function filtrarTablaHistorial(termino) {
+    const tbody = document.querySelector('#tabla-historial-general tbody');
+    if (!tbody) return;
+    
+    // Seleccionamos todas las filas de la tabla
+    const filas = tbody.querySelectorAll('tr.fila-busqueda');
+    
+    filas.forEach(fila => {
+        // Obtenemos TODO el texto de la fila en minúsculas (igual que en las tarjetas)
+        const textoFila = fila.textContent.toLowerCase();
+        
+        // Si el texto de la fila incluye lo que escribimos, la mostramos, sino la ocultamos
+        if (textoFila.includes(termino)) {
+            fila.style.display = '';
+        } else {
+            fila.style.display = 'none';
+        }
+    });
 }

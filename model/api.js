@@ -146,7 +146,14 @@ const apiAuditoria = {
             comentario: comentario 
         })
     }),
-    
+    denegarDerivacion: async (id) => await ProcesarPeticion(apiAuditoria.baseUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'denegarDerivacion',
+            id: id
+        })
+    }),
     // Derivar (Ahora sí envía los 3 datos obligatorios a tu backend)
     derivarAuditoria: async (id, usuarioDestino, comentario) => await procesarPeticion(apiAuditoria.baseUrl, {
         method: 'POST', 
