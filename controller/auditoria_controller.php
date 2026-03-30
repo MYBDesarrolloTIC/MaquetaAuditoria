@@ -160,7 +160,7 @@ switch ($action) {
                     $auditoria['hora'],
                     $auditoria['id_ciudadano'],
                     $auditoria['motivo'],
-                    'Derivación denegada',
+                    $datos['comentario'],
                     $id_estado, // Ahora sí tendrá un número válido (3)
                     $tokenData['id']
                 ]);
