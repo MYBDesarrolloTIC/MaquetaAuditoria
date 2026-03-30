@@ -290,8 +290,70 @@ body, html {
     flex-wrap: wrap; 
     box-shadow: 0 4px 15px rgba(139, 21, 16, 0.2);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative; /* Agrega esto */
+    overflow: hidden;   /* Agrega esto */
+}
+/* Asegurar que los textos y botones queden por encima del ícono de fondo */
+.header-seccion > div {
+    position: relative;
+    z-index: 1;
 }
 
+/* Asegurar que los textos y botones queden SIEMPRE por encima del ícono */
+.header-seccion > div {
+    position: relative;
+    z-index: 2; /* Subimos la prioridad del botón y el texto */
+}
+
+/* Estilo para el ícono de fondo en los encabezados */
+.header-icon-bg {
+    position: absolute;
+    right: 0;             /* Completamente apegado a la derecha */
+    bottom: -15px;        /* Asomando justo desde el borde inferior */
+    top: auto;
+    font-size: 6.5rem !important; /* Tamaño más moderado */
+    
+    /* Rojo difuminado: Usamos el rojo oscuro de tu paleta con opacidad, 
+       así se ve como una marca de agua roja y cero blanco */
+    color: var(--yb-red-dark) !important; 
+    opacity: 0.3; /* Controla qué tan difuminado se ve (0.3 es sutil) */
+    
+    pointer-events: none; 
+    z-index: 0; /* Lo mantiene al fondo absoluto */
+    
+    /* Animación suave y fluida */
+    transition: transform 0.5s ease-out;
+}
+
+/* Efecto de movimiento sutil: Arriba y a la izquierda */
+.header-seccion:hover .header-icon-bg {
+    /* Deslizamiento leve de 10px hacia adentro y arriba */
+    transform: translate(-10px, -10px);
+}
+
+@media screen and (max-width: 768px) {
+    /* En celulares lo mantenemos apegado pero un poco más chico */
+    .header-icon-bg {
+        right: 0;
+        bottom: -10px;
+        font-size: 5rem !important;
+        opacity: 0.15; 
+    }
+}
+
+/* Pequeño efecto de movimiento al pasar el mouse por el recuadro rojo */
+.header-seccion:hover .header-icon-bg {
+    transform: translateY(-50%) scale(1.1) rotate(-5deg);
+}
+
+@media screen and (max-width: 768px) {
+    /* En móviles, movemos el ícono a la derecha y lo hacemos un poco más chico */
+    .header-icon-bg {
+        right: -10%;
+        font-size: 6rem !important;
+        opacity: 0.1; /* Más transparente para que no moleste el texto */
+    }
+}
 .header-seccion h1,
 .header-seccion h2,
 .header-seccion p,
@@ -403,15 +465,50 @@ body, html {
 /* =========================================
    TABLAS CRUD
    ========================================= */
-.table { font-size: 1.1rem !important; background: white; border-radius: 12px; overflow: hidden; }
+/* 1. Contenedor principal de la tabla con borde exterior */
+.table { 
+    font-size: 1.1rem !important; 
+    background: white; 
+    border-radius: 12px; 
+    overflow: hidden; 
+    border: 1px solid #e9ecef !important; /* Borde exterior sutil */
+}
+
+/* 2. Fondo continuo para la cabecera */
+.table thead tr {
+    background: linear-gradient(135deg, var(--yb-red-dark) 0%, var(--yb-red) 100%) !important;
+}
+
+/* 3. Celdas de la Cabecera (Rojas con divisores verticales transparentes) */
 .table th {
     padding: 1.5rem 1rem !important;
     font-weight: 700 !important;
-    background-color: #f8f9fa;
-    color: var(--yb-black) !important;
+    background: transparent !important; 
+    color: #ffffff !important;
+    border-top: none !important;
+    border-bottom: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important; /* Línea vertical sutil entre títulos */
 }
-.table td { padding: 1.2rem 1rem !important; vertical-align: middle !important; transition: background-color 0.2s; }
+.table th:last-child {
+    border-right: none !important; /* La última columna no lleva línea a la derecha */
+}
 
+/* 4. Celdas de los Datos (Líneas divisorias horizontales y verticales grises) */
+.table td { 
+    padding: 1.2rem 1rem !important; 
+    vertical-align: middle !important; 
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #e9ecef !important; /* Separación horizontal de filas */
+    border-right: 1px solid #e9ecef !important;  /* Separación vertical de columnas */
+}
+.table td:last-child {
+    border-right: none !important; /* La última celda no lleva línea a la derecha */
+}
+.table tbody tr:last-child td {
+    border-bottom: none !important; /* Para que no doble el borde con el fondo de la tabla */
+}
+
+/* 5. Efecto Hover de la fila */
 .table-hover tbody tr { transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease; }
 .table-hover tbody tr:hover {
     transform: scale(1.01);
@@ -421,7 +518,6 @@ body, html {
     position: relative;
 }
 .table .btn-sm { font-size: 1rem !important; padding: 0.4rem 0.8rem !important; }
-
 /* Nuevo contenedor para botones de acción en tablas, asegurando mismo tamaño */
 .table-actions-container {
     display: flex;
@@ -444,31 +540,31 @@ body, html {
     padding-left: 1rem !important;
     padding-right: 1rem !important;
 }
-
 /* =========================================================================
-   8. NOTIFICACIONES FLOTANTES (TOASTS) Y BARRA DE BÚSQUEDA
+   8. NOTIFICACIONES FLOTANTES (TOASTS)
    ========================================================================= */
-#toast-container-yb { z-index: 9999 !important; position: fixed; bottom: 2rem; right: 2rem; pointer-events: none; }
+#toast-container-yb { 
+    z-index: 9999 !important; 
+    position: fixed !important; 
+    bottom: 2rem !important; 
+    left: 100px !important; /* Forzado a la izquierda, saltando los 80px del menú */
+    right: auto !important; /* Anulamos cualquier regla que lo tire a la derecha */
+    pointer-events: none; 
+}
+
 #toast-container-yb .toast { 
-    pointer-events: auto; border-radius: 12px; border: none; margin-top: 10px; min-width: 320px; 
-    animation: slideInToast 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+    pointer-events: auto; 
+    border-radius: 12px; 
+    border: none; 
+    margin-top: 10px; 
+    min-width: 320px; 
+    animation: slideInLeftToast 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
 }
 
-@keyframes slideInToast { 
-    0% { transform: translateX(100%) scale(0.9); opacity: 0; } 
+/* Animación para que entren deslizándose desde la izquierda */
+@keyframes slideInLeftToast { 
+    0% { transform: translateX(-100%) scale(0.9); opacity: 0; } 
     100% { transform: translateX(0) scale(1); opacity: 1; } 
-}
-
-/* Quitar resplandor azul de Bootstrap en inputs */
-.form-control:focus {
-    box-shadow: none !important;
-    border-color: var(--yb-red) !important;
-    background-color: #ffffff !important; 
-    transition: all 0.3s ease;
-}
-.input-group:focus-within .input-group-text {
-    background-color: #ffffff !important;
-    transition: all 0.3s ease;
 }
 
 /* =========================================================================

@@ -127,7 +127,6 @@ switch ($action) {
             echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
         }
         break;
-        
         case 'denegarDerivacion':
         if (!isset($datos['id'])) {
             echo json_encode([
@@ -140,7 +139,8 @@ switch ($action) {
         try {
             $con->beginTransaction();
 
-            $id_estado = $con->query("SELECT id FROM estado_auditoria WHERE nombre = 'Denegada'")->fetchColumn();
+            // CORRECCIÓN AQUÍ: El estado en la BD es 'No Completada', no 'Denegada'
+            $id_estado = $con->query("SELECT id FROM estado_auditoria WHERE nombre = 'No Completada'")->fetchColumn();
 
             $auditoria = $con->query("SELECT * FROM auditoria WHERE id = " . intval($datos['id']))->fetch(PDO::FETCH_ASSOC);
             $derivacion = $con->query("SELECT * FROM derivaciones WHERE id_auditoria = " . intval($datos['id']))->fetch(PDO::FETCH_ASSOC);
@@ -161,7 +161,7 @@ switch ($action) {
                     $auditoria['id_ciudadano'],
                     $auditoria['motivo'],
                     'Derivación denegada',
-                    $id_estado,
+                    $id_estado, // Ahora sí tendrá un número válido (3)
                     $tokenData['id']
                 ]);
 
@@ -192,9 +192,9 @@ switch ($action) {
                 'message' => 'Error SQL: ' . $e->getMessage()
             ]);
         }
-        exit;
-
-    // --- CAMBIAR ESTADO NORMAL (ALCALDE) ---
+        break; // Es mejor usar break en los case en lugar de exit;
+    
+        // --- CAMBIAR ESTADO NORMAL (ALCALDE) ---
     case 'cambiarEstado':
         if (!isset($datos['id'], $datos['nuevo_estado'], $datos['comentario'])) {
             exit;
@@ -249,29 +249,42 @@ switch ($action) {
             echo json_encode(['status' => 0, 'message' => 'Error SQL: ' . $e->getMessage()]);
         }
         break;
+case 'buscarCiudadano':
+        $termino = isset($_GET['termino']) ? trim($_GET['termino']) : '';
+        $terminoNormalizado = strtoupper(str_replace(['.', '-'], '', $termino));
 
-    case 'buscarCiudadano':
-        $termino = isset($_GET['termino']) ? $_GET['termino'] : '';
-        if (strlen($termino) < 3) {
+        if (strlen($terminoNormalizado) < 3) {
             echo json_encode(['status' => 1, 'data' => []]);
             exit;
         }
+
         try {
-            // Buscamos coincidencias por RUT o por Nombre
-            $sql = "SELECT * FROM ciudadanos WHERE rut LIKE ? OR nombre LIKE ? LIMIT 10";
+            $sql = "SELECT * FROM ciudadanos 
+                    WHERE REPLACE(REPLACE(UPPER(rut), '.', ''), '-', '') LIKE ?
+                    OR UPPER(nombre) LIKE ?
+                    LIMIT 10";
+
             $stmt = $con->prepare($sql);
-            $like = "%" . $termino . "%";
-            $stmt->execute([$like, $like]);
+            $likeRut = "%" . $terminoNormalizado . "%";
+            $likeNombre = "%" . strtoupper($termino) . "%";
+            $stmt->execute([$likeRut, $likeNombre]);
             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Mapeamos los datos para que el frontend los entienda como los programó
+           // Mapeamos los datos enviando TODAS las columnas de la BD al frontend
             $ciudadanos = array_map(function ($c) {
                 return [
                     'rut_solicitante' => $c['rut'],
                     'nombre_solicitante' => $c['nombre'],
-                    'nombres' => $c['nombre'], // Para compatibilidad con el JS
+                    'nombres' => $c['nombres'], // Usamos la columna real 'nombres' separada
+                    'apellido_p' => $c['apellido_p'],
+                    'apellido_m' => $c['apellido_m'],
+                    'fecha_nacimiento' => $c['fecha_nacimiento'],
                     'celular' => $c['telefono'],
-                    'correo' => $c['correo']
+                    'correo' => $c['correo'],
+                    'sector' => $c['sector'],
+                    'direccion' => $c['direccion'],
+                    'discapacidad' => $c['discapacidad']
                 ];
             }, $resultados);
 

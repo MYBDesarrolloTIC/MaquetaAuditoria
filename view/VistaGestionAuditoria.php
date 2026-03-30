@@ -1,6 +1,8 @@
 <?php include 'includes/Header.php'; ?>
 
     <div class="header-seccion">
+        <i class="fas fa-clipboard-list header-icon-bg"></i>
+        
         <div>
             <h1>Gestión de Solicitudes Diarias</h1>
             <p>Administración de audiencias y trámites diarios</p>
@@ -20,37 +22,19 @@
     <div class="card shadow-sm border-0 mb-5">
         <div class="table-responsive">
             <table class="table table-hover mb-0" id="tabla-pendientes">
-                <thead class="bg-light">
+                <thead>
                     <tr>
                         <th>RUT</th>
                         <th>Nombre Completo</th>
-                        <th>Fecha</th>
-                        <th>Hora</th>
+                        <th>Sector / Dirección</th>
+                        <th>Contacto</th>
+                        <th>Fecha y Hora</th>
                         <th>Motivo</th>
                         <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- EJEMPLO DE CÓMO TU JS DEBE GENERAR LA FILA PARA QUE LOS BOTONES SEAN IGUALES -->
-                    <!-- Nota la clase "table-actions-container" envolviendo los botones -->
-                    <tr>
-                        <td>21.665.534-6</td>
-                        <td>Ejemplo Ciudadano</td>
-                        <td>2023-10-25</td>
-                        <td>18:21</td>
-                        <td>ASDAD...</td>
-                        <td>
-                            <div class="table-actions-container">
-                                <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="editar">
-                                    <i class="fas fa-edit"></i> Editar
-                                </button>
-                                <button class="btn btn-danger btn-sm" onclick="eliminar">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
+                    </tbody>
             </table>
         </div>
     </div>
@@ -59,19 +43,19 @@
     <div class="card shadow-sm border-0 mb-4">
         <div class="table-responsive">
             <table class="table mb-0" id="tabla-historial-diario">
-                <thead class="bg-light">
+                <thead>
                     <tr>
                         <th class="ps-4">RUT</th>
                         <th>Nombre Completo</th>
-                        <th>Fecha</th>
-                        <th>Hora</th>
+                        <th>Sector / Dirección</th>
+                        <th>Contacto</th>
+                        <th>Fecha y Hora</th>
                         <th>Motivo</th>
-                        <th>Estado</th>
+                        <th class="text-center">Estado</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- El JS genera esto -->
-                </tbody>
+                    </tbody>
             </table>
         </div>
     </div>
@@ -303,7 +287,6 @@
         </div>
     </div>
 
-    <!-- MODAL ELIMINAR -->
     <div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
@@ -322,5 +305,6 @@
 
 <script src="../model/api.js"></script>
 <script src="../assets/js/GestionAudiencia.js"></script>
+    <script src="../assets/js/alertas.js"></script>
 
 <?php include 'includes/Footer.php'; ?>

@@ -1,4 +1,10 @@
+/* =======================================================================
+ * ARCHIVO: Derivaciones.js
+ * SISTEMA: Gestión de Auditoría Municipal
+ * ======================================================================= */
+
 let idDerivacionSeleccionada = null;
+let estadoObjetivo = null; // NUEVA VARIABLE: Para saber si completa o deniega
 let modalResolucion = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -9,17 +15,15 @@ document.addEventListener("DOMContentLoaded", () => {
         modalResolucion = new bootstrap.Modal(modalEl);
     }
 
-    // === NUEVO: CÓDIGO DEL BUSCADOR ===
+    // === CÓDIGO DEL BUSCADOR ===
     const buscador = document.getElementById('buscador-derivaciones');
     if (buscador) {
         buscador.addEventListener('input', function () {
             const termino = this.value.toLowerCase().trim();
-            // Seleccionar todas las columnas (tarjetas) dentro del contenedor
             const tarjetas = document.querySelectorAll('#contenedor-derivaciones > div.col-md-6');
             
             tarjetas.forEach(tarjeta => {
                 const textoTarjeta = tarjeta.textContent.toLowerCase();
-                // Ocultar o mostrar dinámicamente
                 if (textoTarjeta.includes(termino)) {
                     tarjeta.style.display = '';
                 } else {
@@ -44,7 +48,6 @@ async function cargarMisDerivaciones() {
         </div>`;
 
     try {
-        // Llamamos a la API para traer solo las derivaciones de este usuario
         const res = await apiAuditoria.getMisDerivaciones();
         contenedor.innerHTML = '';
 
@@ -53,7 +56,7 @@ async function cargarMisDerivaciones() {
                 contenedor.innerHTML += `
                 <div class="col-md-6 col-lg-4 mb-4" id="tarjeta-derivacion-${item.id}">
                     <div class="card shadow-sm border-0 h-100 py-3" style="border-left: 5px solid #17a2b8 !important;">
-                        <div class="card-body">
+                        <div class="card-body d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="card-title fw-bold text-black mb-0">${item.nombre_solicitante}</h5>
                                 <span class="badge bg-info text-dark shadow-sm"><i class="fas fa-thumbtack"></i> Asignada a ti</span>
@@ -69,14 +72,17 @@ async function cargarMisDerivaciones() {
                                 <span class="text-muted">${item.motivo}</span>
                             </div>
 
-                            <div class="bg-warning bg-opacity-10 p-3 rounded mb-3 text-start small border border-warning border-opacity-25">
+                            <div class="bg-warning bg-opacity-10 p-3 rounded mb-4 text-start small border border-warning border-opacity-25">
                                 <strong class="text-warning-dark"><i class="fas fa-share me-1"></i> Instrucciones de Derivación:</strong><br>
                                 <span class="text-dark fw-medium">${item.comentario_derivacion || 'Sin instrucciones adicionales.'}</span>
                             </div> 
                             
-                            <div class="d-grid mt-auto">
-                                <button class="btn btn-success fw-bold shadow-sm py-2" onclick="prepararResolucion(${item.id})">
-                                    <i class="fas fa-check-circle me-1"></i> Resolver Petición
+                            <div class="d-flex justify-content-center gap-3 mt-auto flex-wrap">
+                                <button class="btn btn-sm btn-success fw-bold shadow-sm px-3" onclick="prepararResolucion(${item.id}, 'Completada')">
+                                    <i class="fas fa-check-circle me-1"></i> Completar
+                                </button>
+                                <button class="btn btn-sm btn-danger fw-bold shadow-sm px-3" onclick="prepararResolucion(${item.id}, 'Denegada')">
+                                    <i class="fas fa-times-circle me-1"></i> Denegar
                                 </button>
                             </div>
                         </div>
@@ -93,15 +99,16 @@ async function cargarMisDerivaciones() {
                 </div>`;
         }
     } catch (error) {
-        contenedor.innerHTML = `<div class="col-12"><div class="alert alert-danger text-center">Error al conectar con el servidor para obtener las derivaciones.</div></div>`;
+        contenedor.innerHTML = `<div class="col-12"><div class="alert alert-danger text-center">Error al conectar con el servidor.</div></div>`;
     }
 }
 
 // ==========================================
-// 2. PREPARAR MODAL
+// 2. PREPARAR MODAL DINÁMICAMENTE
 // ==========================================
-function prepararResolucion(id) {
+function prepararResolucion(id, estado) {
     idDerivacionSeleccionada = id;
+    estadoObjetivo = estado; // Guardamos qué botón se presionó
 
     // Limpiar campos y errores
     const comentarioInput = document.getElementById('modal-comentario-resolucion');
@@ -109,6 +116,32 @@ function prepararResolucion(id) {
     comentarioInput.value = "";
     comentarioInput.classList.remove('is-invalid', 'border-danger');
     errorDiv.style.display = 'none';
+
+    // Modificar el DOM del modal según la acción (Verde para completada, Rojo para denegada)
+    const modalBody = document.querySelector('#modalResolverDerivacion .modal-body');
+    const iconDiv = modalBody.querySelector('div:first-child'); 
+    const icon = iconDiv.querySelector('i');
+    const title = modalBody.querySelector('h3');
+    const text = modalBody.querySelector('p.text-muted');
+    const btnAccion = document.getElementById('btnResolverDerivacion');
+
+    if (estado === 'Completada') {
+        iconDiv.className = 'text-success mb-4';
+        icon.className = 'fas fa-check-circle';
+        title.textContent = 'Completar Petición';
+        text.textContent = 'Por favor, redacte detalladamente cómo se resolvió esta petición asignada.';
+        
+        btnAccion.className = 'btn btn-success btn-lg fw-bold px-5 shadow-sm';
+        btnAccion.innerHTML = '<i class="fas fa-check me-2"></i> Marcar como Completada';
+    } else {
+        iconDiv.className = 'text-danger mb-4';
+        icon.className = 'fas fa-times-circle';
+        title.textContent = 'Denegar Petición';
+        text.textContent = 'Por favor, justifique obligatoriamente por qué se deniega o no se puede resolver esta derivación.';
+        
+        btnAccion.className = 'btn btn-danger btn-lg fw-bold px-5 shadow-sm';
+        btnAccion.innerHTML = '<i class="fas fa-times me-2"></i> Guardar Motivo';
+    }
 
     modalResolucion.show();
 }
@@ -131,7 +164,6 @@ function validarYResolver() {
     comentarioInput.classList.remove('is-invalid', 'border-danger');
     errorDiv.style.display = 'none';
     
-    // Bloquear botón
     const btnAccion = document.getElementById('btnResolverDerivacion');
     btnAccion.disabled = true;
     btnAccion.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Procesando...';
@@ -140,13 +172,34 @@ function validarYResolver() {
 }
 
 // ==========================================
-// 4. API CALL: RESOLVER DERIVACIÓN
+// 4. EJECUTAR LLAMADA AL BACKEND
 // ==========================================
 async function ejecutarResolucion(comentarioFinal) {
     if (!idDerivacionSeleccionada) return;
 
     try {
-        const res = await apiAuditoria.resolverDerivacion(idDerivacionSeleccionada, comentarioFinal);
+        let res;
+
+        if (estadoObjetivo === 'Completada') {
+            // Llamada nativa de api.js
+            res = await apiAuditoria.resolverDerivacion(idDerivacionSeleccionada, comentarioFinal);
+        } else {
+            // Hacemos el fetch directamente inyectando el comentario (Ya que el api.js original no lo enviaba para esta acción)
+            const token = localStorage.getItem('jwt_token');
+            const req = await fetch('../controller/auditoria_controller.php', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ 
+                    action: 'denegarDerivacion', 
+                    id: idDerivacionSeleccionada,
+                    comentario: comentarioFinal 
+                })
+            });
+            res = await req.json();
+        }
         
         if (res.status === 1) {
             modalResolucion.hide();
@@ -165,13 +218,14 @@ async function ejecutarResolucion(comentarioFinal) {
             alert("Error del servidor: " + res.message);
         }
     } catch (error) {
-        alert("Ocurrió un error de conexión al resolver la petición.");
+        alert("Ocurrió un error de conexión al procesar la petición.");
     } finally {
+        // Restauramos el estado base del botón por seguridad
         const btnAccion = document.getElementById('btnResolverDerivacion');
         if(btnAccion) {
             btnAccion.disabled = false;
-            btnAccion.innerHTML = '<i class="fas fa-check me-2"></i> Marcar como Completada';
         }
         idDerivacionSeleccionada = null;
+        estadoObjetivo = null;
     }
 }

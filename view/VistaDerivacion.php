@@ -1,6 +1,7 @@
 <?php include 'includes/Header.php'; ?>
 
 <div class="header-seccion">
+    <i class="fas fa-inbox header-icon-bg"></i>
     <div>
         <h1>Mis Derivaciones</h1>
         <p>Gestión de peticiones y tareas que te han sido asignadas</p>
@@ -47,5 +48,6 @@
 
 <script src="../model/api.js"></script>
 <script src="../assets/js/Derivaciones.js"></script>
+    <script src="../assets/js/alertas.js"></script>
 
 <?php include 'includes/Footer.php'; ?>

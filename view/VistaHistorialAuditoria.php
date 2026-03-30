@@ -1,10 +1,15 @@
 <?php include 'includes/Header.php'; ?>
 
     <div class="header-seccion">
+        <i class="fas fa-history header-icon-bg"></i>
         <div>
             <h1>Historial General de Asistencia</h1>
             <p>Registro histórico de todas las solicitudes y audiencias</p>
         </div>
+    </div>
+
+    <div class="mb-4 bg-white p-3 shadow-sm" style="border-radius: 12px;">
+        <input type="text" id="buscador-historial" class="form-control form-control-lg bg-light border-0" placeholder="🔍 Buscar por RUT o Nombre...">
     </div>
 
     <div class="card shadow-sm border-0 mb-5">
@@ -44,5 +49,6 @@
 
     <script src="../model/api.js"></script>
     <script src="../assets/js/Historial.js"></script>
+    <script src="../assets/js/alertas.js"></script>
 
 <?php include 'includes/Footer.php'; ?>

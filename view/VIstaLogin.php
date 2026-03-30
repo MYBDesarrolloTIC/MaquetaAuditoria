@@ -54,5 +54,7 @@
                     </form>
 <script src="../model/api.js"></script>
 <script src="../assets/js/Login.js"></script>
+
+    <script src="../assets/js/alertas.js"></script>
 </body>
 </html>

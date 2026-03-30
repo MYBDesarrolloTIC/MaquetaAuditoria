@@ -1,6 +1,7 @@
-    <?php include 'includes/Header.php'; ?>
+<?php include 'includes/Header.php'; ?>
 
     <div class="header-seccion">
+        <i class="fas fa-user-clock header-icon-bg"></i>
         <div>
             <h1>Visitas Pendientes</h1>
             <p>Revisión y resolución de audiencias asignadas al Alcalde</p>
@@ -45,5 +46,6 @@
 
     <script src="../model/api.js"></script>
     <script src="../assets/js/ListaAuditoria.js"></script>
+    <script src="../assets/js/alertas.js"></script>
 
     <?php include 'includes/Footer.php'; ?>

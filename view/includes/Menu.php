@@ -14,7 +14,7 @@
         </a>
         
         <a href="VistaHistorialAuditoria.php" class="nav-link-yb" data-roles="admin,secretaria">
-            <i class="fas fa-clipboard"></i> <span>Historial</span>
+            <i class="fas fa-history"></i> <span>Historial</span>
         </a>
         
         <a href="VistaUsuario.php" class="nav-link-yb" data-roles="admin">

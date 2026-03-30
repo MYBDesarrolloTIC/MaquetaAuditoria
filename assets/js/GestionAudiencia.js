@@ -69,7 +69,7 @@ async function cargarGestionDiaria() {
             
             const fechaHora = `<div class="fw-bold">${item.fecha}</div><span class="badge bg-light text-primary border"><i class="fas fa-clock"></i> ${(item.hora || '').substring(0, 5)}</span>`;
 
-            if (item.estado === 'Pendiente') {
+           if (item.estado === 'Pendiente') {
                 hayPendientes = true;
                 tbodyPendientes.innerHTML += `
                   <tr class="fila-busqueda align-middle">
@@ -80,9 +80,13 @@ async function cargarGestionDiaria() {
                         <td>${fechaHora}</td>
                         <td>${(item.motivo || '').substring(0, 30)}...</td>
                         <td class="text-center">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-sm btn-warning fw-bold" onclick="abrirModalEditar(${index})"><i class="fas fa-edit"></i> Editar</button>
-                                <button class="btn btn-sm btn-danger fw-bold" onclick="abrirModalEliminar(${item.id})"><i class="fas fa-trash"></i> Eliminar</button>
+                            <div class="table-actions-container">
+                                <button class="btn btn-sm btn-warning fw-bold text-dark" onclick="abrirModalEditar(${index})">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button class="btn btn-sm btn-danger fw-bold" onclick="abrirModalEliminar(${item.id})">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
                             </div>
                         </td>
                     </tr>`;
@@ -93,11 +97,12 @@ async function cargarGestionDiaria() {
                         <td class="ps-4 rut-col">${rutFormateado}</td>
                         <td class="nombre-col">${nombreMostrar}</td>
                         <td>${sectorMostrar}</td>
+                        <td><i class="fas fa-phone text-success me-1"></i>${contacto}</td>
                         <td>${fechaHora}</td>
                         <td>${(item.motivo || '').substring(0, 30)}...</td>
-                        <td><span class="badge ${badgeClass} shadow-sm px-3 py-2">${item.estado}</span></td>
+                        <td class="text-center"><span class="badge ${badgeClass} shadow-sm px-3 py-2">${item.estado}</span></td>
                     </tr>`;
-            } 
+            }
         });
         if (!hayPendientes) tbodyPendientes.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">No hay pendientes.</td></tr>`;
     }
@@ -230,6 +235,14 @@ function formatearRut(rut) {
     return cuerpo + '-' + valor.slice(-1);
 }
 
+// NUEVA FUNCIÓN AGREGADA AQUÍ:
+function normalizarRutBusqueda(rut) {
+    return String(rut || '')
+        .replace(/\./g, '')
+        .replace(/-/g, '')
+        .trim()
+        .toUpperCase();
+}
 function validarRut(rut) {
     let valor = rut.replace(/\./g, '').replace('-', '').toUpperCase();
     let cuerpo = valor.slice(0, -1);
@@ -293,10 +306,10 @@ function configurarAutocompletado(inputId) {
     // Evento al escribir
     inputEl.addEventListener('input', function () {
         // Limpiamos puntos y guión para que la búsqueda en la BD sea exacta (Si es RUT)
-        let termino = this.value.trim();
-        if(inputId.includes('rut')) {
-            termino = termino.replace(/[^0-9kK]/g, ''); 
-        }
+        const valorVisible = this.value.trim();
+        const termino = inputId.includes('rut') 
+            ? normalizarRutBusqueda(valorVisible)
+            : valorVisible.toLowerCase().trim();
 
         clearTimeout(timeoutBusqueda);
 

@@ -1,6 +1,7 @@
 <?php include 'includes/Header.php'; ?>
 
     <div class="header-seccion">
+        <i class="fas fa-users-cog header-icon-bg"></i>
         <div>
             <h1>Gestión de Usuarios</h1>
             <p>Administración de cuentas, roles y accesos del sistema</p>
@@ -135,5 +136,6 @@
 
     <script src="../model/api.js"></script>
     <script src="../assets/js/usuario.js"></script>
+    <script src="../assets/js/alertas.js"></script>
 
 <?php include 'includes/Footer.php'; ?>

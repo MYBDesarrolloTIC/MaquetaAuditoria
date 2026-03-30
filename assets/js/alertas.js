@@ -1,56 +1,82 @@
+/* =======================================================================
+ * ARCHIVO: alertas.js 
+ * SISTEMA: Interceptor Global de Notificaciones (Toasts)
+ * ======================================================================= */
+
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Crear el contenedor de alertas dinámicamente si no existe
-    if (!document.getElementById('toast-container-yb')) {
+    // 1. ELIMINAR CUALQUIER RASTRO DE CONTENEDORES VIEJOS (Izquierda o anteriores)
+    const viejo1 = document.getElementById('toast-container-yb');
+    const viejo2 = document.getElementById('contenedor-alertas-izq');
+    const viejo3 = document.getElementById('contenedor-extremo-izq');
+    if (viejo1) viejo1.remove();
+    if (viejo2) viejo2.remove();
+    if (viejo3) viejo3.remove();
+
+    // 2. INYECTAR CSS DINÁMICO (Ahora anclado a la DERECHA)
+    if (!document.getElementById('toast-styles-der')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles-der';
+        style.innerHTML = `
+            #contenedor-alertas-der {
+                position: fixed !important;
+                bottom: 20px !important;
+                right: 20px !important; /* <--- AHORA A LA DERECHA */
+                left: auto !important;  /* <--- LIBERAMOS LA IZQUIERDA */
+                z-index: 99999 !important;
+                pointer-events: none;
+            }
+            .toast-personalizado {
+                pointer-events: auto;
+                border-radius: 12px;
+                border: none;
+                margin-top: 10px;
+                min-width: 320px;
+                animation: entrarDesdeDer 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            }
+            @keyframes entrarDesdeDer {
+                0% { transform: translateX(100%) scale(0.9); opacity: 0; }
+                100% { transform: translateX(0) scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // 3. CREAR EL NUEVO CONTENEDOR EN LA DERECHA
+    if (!document.getElementById('contenedor-alertas-der')) {
         const container = document.createElement('div');
-        container.id = 'toast-container-yb';
-        
-        // Lo posicionamos fijo abajo a la izquierda
-        container.style.position = 'fixed';
-        container.style.bottom = '2rem';
-        container.style.left = '2rem';
-        container.style.right = 'auto'; // Anula el 'right' por si estaba en el CSS antiguo
-        container.style.zIndex = '9999';
-        container.style.pointerEvents = 'none'; // Para no bloquear clics invisibles
-        
+        container.id = 'contenedor-alertas-der';
         document.body.appendChild(container);
     }
 });
 
-/**
- * Muestra una alerta en pantalla (Toast)
- * @param {string} mensaje - El texto que quieres mostrar
- * @param {string} tipo - 'success' (verde), 'error' (rojo), 'warning' (amarillo)
- */
 function mostrarNotificacion(mensaje, tipo = 'success') {
-    const container = document.getElementById('toast-container-yb');
+    const container = document.getElementById('contenedor-alertas-der');
     if (!container) return;
 
-    // Variables de estilo por defecto
     let bgClass = '';
     let textClass = 'text-white';
     let icon = '';
     let title = '';
 
-    // Lógica para elegir el color según el tipo
     switch (tipo.toLowerCase()) {
         case 'success':
         case 'completado':
-            bgClass = 'bg-success'; // Verde
+            bgClass = 'bg-success';
             icon = '<i class="fas fa-check-circle fs-3"></i>';
             title = '¡Completado!';
             break;
         case 'error':
         case 'fallo':
-            bgClass = 'bg-danger'; // Rojo
+            bgClass = 'bg-danger';
             icon = '<i class="fas fa-times-circle fs-3"></i>';
             title = 'Fallo en la operación';
             break;
         case 'warning':
         case 'alerta':
-            bgClass = 'bg-warning'; // Amarillo
-            textClass = 'text-dark'; // Texto oscuro para contrastar con el amarillo
+            bgClass = 'bg-warning';
+            textClass = 'text-dark';
             icon = '<i class="fas fa-exclamation-triangle fs-3"></i>';
-            title = 'Alerta / Error';
+            title = 'Alerta del Sistema';
             break;
         default:
             bgClass = 'bg-primary';
@@ -59,18 +85,11 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
             break;
     }
 
-    // 2. Crear el elemento HTML del Toast
     const toastEl = document.createElement('div');
-    toastEl.className = `toast align-items-center border-0 mb-3 shadow-lg ${bgClass} ${textClass}`;
+    toastEl.className = `toast toast-personalizado align-items-center border-0 mb-3 shadow-lg ${bgClass} ${textClass}`;
     toastEl.setAttribute('role', 'alert');
     toastEl.setAttribute('aria-live', 'assertive');
     toastEl.setAttribute('aria-atomic', 'true');
-    toastEl.style.minWidth = '320px';
-    toastEl.style.borderRadius = '12px';
-    toastEl.style.pointerEvents = 'auto'; // Permitir clics para cerrarlo manual
-    
-    // Animación de entrada personalizada desde la izquierda
-    toastEl.style.animation = 'slideInLeftToast 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
 
     toastEl.innerHTML = `
         <div class="d-flex p-3">
@@ -86,15 +105,34 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
     `;
 
     container.appendChild(toastEl);
-
-    // 3. Iniciar el Toast con Bootstrap y hacerlo durar 4 segundos (4000ms)
-    const bsToast = new bootstrap.Toast(toastEl, {
-        delay: 4000
-    });
+    const bsToast = new bootstrap.Toast(toastEl, { delay: 4000 });
     bsToast.show();
 
-    // 4. Limpiar la basura: Borrar el HTML del DOM cuando termine la animación de cierre
     toastEl.addEventListener('hidden.bs.toast', () => {
         toastEl.remove();
     });
 }
+
+// =========================================================================
+// INTERCEPTORES GLOBALES
+// =========================================================================
+window.alert = function(mensaje) {
+    const tipo = String(mensaje).toLowerCase().includes('error') ? 'error' : 'warning';
+    mostrarNotificacion(mensaje, tipo);
+};
+
+const originalFetch = window.fetch;
+window.fetch = async function(...args) {
+    const response = await originalFetch(...args);
+    try {
+        const clone = response.clone();
+        clone.json().then(data => {
+            if (data && data.status === 1 && data.message && data.message !== "Acceso concedido") {
+                mostrarNotificacion(data.message, 'success');
+            }
+        }).catch(() => {});
+    } catch (e) {
+        console.error("Error en interceptor de notificaciones:", e);
+    }
+    return response;
+};
